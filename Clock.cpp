@@ -139,6 +139,8 @@ u32 Clock::msec()
 
 double Clock::usec()
 {
+	CAT_FENCE_COMPILER;
+
 #if defined(CAT_OS_WINDOWS)
 
     /* In Windows, this value can leap forward randomly:
@@ -165,6 +167,7 @@ double Clock::usec()
     return 1000000.0 * static_cast<double>(cateq_v.tv_sec) + static_cast<double>(cateq_v.tv_usec);
 
 #endif
+	CAT_FENCE_COMPILER;
 }
 
 
