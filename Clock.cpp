@@ -246,7 +246,8 @@ u32 Clock::cycles()
 
 #elif defined(CAT_ASM_ATT) && defined(CAT_ISA_X86)
 	CAT_ASM_BEGIN
-		"rdtsc" : "=a"(x[0]), "=d"(x[1])
+		"cpuid\n\t"
+		"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx", "ebx", "ecx"
 	CAT_ASM_END
 
 #elif defined(CAT_ASM_ATT) && defined(CAT_ISA_PPC)
