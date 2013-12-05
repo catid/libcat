@@ -103,6 +103,7 @@ namespace cat {
 # define CAT_COMPILER_COMPAT_MSVC
 # define CAT_INLINE inline
 # define CAT_ASM_BEGIN _asm {
+# define CAT_ASM_BEGIN_VOLATILE _asm {
 # define CAT_ASM_EMIT __emit__
 
 //-----------------------------------------------------------------------------
@@ -168,6 +169,7 @@ namespace cat {
 #endif
 #if !defined(CAT_ASM_BEGIN)
 # define CAT_ASM_BEGIN __asm {
+# define CAT_ASM_BEGIN_VOLATILE __asm {
 #endif
 #if !defined(CAT_ASM_EMIT)
 # define CAT_ASM_EMIT _emit
@@ -222,7 +224,8 @@ namespace cat {
 # define CAT_ASM_ATT
 #endif
 #if !defined(CAT_ASM_BEGIN)
-# define CAT_ASM_BEGIN __asm__ __volatile__ (
+# define CAT_ASM_BEGIN __asm__ (
+# define CAT_ASM_BEGIN_VOLATILE __asm__ __volatile__ (
 #endif
 #if !defined(CAT_ASM_EMIT)
 # define CAT_ASM_EMIT .byte

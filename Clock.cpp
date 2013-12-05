@@ -234,7 +234,7 @@ u32 Clock::cycles()
 	x[0] = (u32)__rdtsc();
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_ISA_X86)
-	CAT_ASM_BEGIN
+	CAT_ASM_BEGIN_VOLATILE
 		push eax
 		push edx
 		CAT_ASM_EMIT 0x0F
@@ -245,7 +245,7 @@ u32 Clock::cycles()
 	CAT_ASM_END
 
 #elif defined(CAT_ASM_ATT) && defined(CAT_ISA_X86)
-	CAT_ASM_BEGIN
+	CAT_ASM_BEGIN_VOLATILE
 		"cpuid\n\t"
 		"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx", "ebx", "ecx"
 	CAT_ASM_END
@@ -254,7 +254,7 @@ u32 Clock::cycles()
 	// Based on code from Kazutomo Yoshii ( http://www.mcs.anl.gov/~kazutomo/rdtsc.html )
 	u32 tmp;
 
-	CAT_ASM_BEGIN
+	CAT_ASM_BEGIN_VOLATILE
 		"0:                  \n"
 		"\tmftbu   %0        \n"
 		"\tmftb    %1        \n"
