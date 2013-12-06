@@ -313,7 +313,7 @@ static bool SetNormalPriority()
 	This code by Nicolas Devillard - 1998. Public domain.
 */
 #define ELEM_SWAP(a,b) { register u32 t=(a);(a)=(b);(b)=t; }
-u32 quick_select(u32 arr[], int n)
+static u32 quick_select(u32 arr[], int n)
 {
 	int low, high ;
 	int median;
