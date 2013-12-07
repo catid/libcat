@@ -109,7 +109,7 @@ namespace cat {
 //-----------------------------------------------------------------------------
 // GNU C++ Compiler
 // SN Systems ProDG C++ Compiler : Compatible with GCC
-#elif defined(__GNUC__) || defined(__APPLE_CC__) || defined(__SNC__)
+#elif defined(__GNUC__) || defined(__APPLE_CC__) || defined(__SNC__) || defined(__clang__)
 # define CAT_COMPILER_GCC
 # define CAT_COMPILER_COMPAT_GCC
 # define CAT_FASTCALL __attribute__ ((fastcall))
@@ -396,7 +396,7 @@ namespace cat {
 #if defined(_LP64) || defined(__LP64__) || defined(__arch64__) || \
 	defined(_WIN64) || defined(_M_X64) || defined(__ia64) || \
 	defined(__ia64__) || defined(__x86_64) || defined(_M_IA64) || \
-	defined(__mips64)
+	defined(__mips64) || defined(__amd64__)
 
 # define CAT_WORD_64
 
