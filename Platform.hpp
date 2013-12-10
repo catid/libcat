@@ -452,6 +452,9 @@ namespace cat {
 #elif defined(_PS3) || defined(__PS3__) || defined(SN_TARGET_PS3)
 # define CAT_OS_PS3
 
+#elif defined(_PS4) || defined(__PS4__) || defined(SN_TARGET_PS4)
+# define CAT_OS_PS4
+
 #elif defined(__OS2__)
 # define CAT_OS_OS2
 
