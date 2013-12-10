@@ -56,6 +56,7 @@ public:
     u32 msec_fast();			// Timestamp in milliseconds, less accurate than msec() but faster
     u32 msec();					// Timestamp in milliseconds
 	double usec();				// Timestamp in microseconds
+	static u32 cycles_fast();	// Timestamp in cycles without cpuid sync
 	static u32 cycles();		// Timestamp in cycles
 
 #ifdef CAT_CLOCK_EXTRA

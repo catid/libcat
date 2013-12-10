@@ -284,6 +284,66 @@ u32 Clock::cycles()
     return x[0];
 }
 
+// Algorithm from Skein test app
+u32 Clock::cycles_fast()
+{
+    u32 x[2];
+
+	CAT_FENCE_COMPILER;
+
+#if defined(CAT_COMPILER_MSVC)
+	x[0] = (u32)__rdtsc();
+
+#elif defined(CAT_ASM_INTEL) && defined(CAT_ISA_X86)
+	CAT_ASM_BEGIN_VOLATILE
+		push eax
+		push edx
+		CAT_ASM_EMIT 0x0F
+		CAT_ASM_EMIT 0x31
+		mov x[0], eax
+		pop edx
+		pop eax
+	CAT_ASM_END
+
+#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_X86)
+	CAT_ASM_BEGIN_VOLATILE
+		"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx"
+	CAT_ASM_END
+
+#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_PPC)
+	// Based on code from Kazutomo Yoshii ( http://www.mcs.anl.gov/~kazutomo/rdtsc.html )
+	u32 tmp;
+
+	CAT_ASM_BEGIN_VOLATILE
+		"0:                  \n"
+		"\tmftbu   %0        \n"
+		"\tmftb    %1        \n"
+		"\tmftbu   %2        \n"
+		"\tcmpw    %2,%0     \n"
+		"\tbne     0b        \n"
+		: "=r"(x[1]),"=r"(x[0]),"=r"(tmp)
+	CAT_ASM_END
+
+#else
+
+# if defined(CAT_OS_WINDOWS)
+	LARGE_INTEGER tim;
+	QueryPerformanceCounter(&tim);
+	x[0] = tim.LowPart;
+# else
+	struct timeval cateq_v;
+	struct timezone cateq_z;
+	gettimeofday(&cateq_v, &cateq_z);
+	x[0] = (u32)cateq_v.tv_usec;
+# endif
+
+#endif
+
+	CAT_FENCE_COMPILER;
+
+    return x[0];
+}
+
 
 //// Thread priority modification
 
