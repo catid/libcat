@@ -29,7 +29,7 @@
 #ifndef CAT_ATOMIC_HPP
 #define CAT_ATOMIC_HPP
 
-#include <cat/Platform.hpp>
+#include "Platform.hpp"
 
 namespace cat {
 
@@ -516,7 +516,7 @@ bool Atomic::BTR(volatile u32 *x, int bit)
 }
 
 
-
 } // namespace cat
 
 #endif // CAT_ATOMIC_HPP
+
