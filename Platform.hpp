@@ -284,8 +284,26 @@ namespace cat {
 	  defined(_M_X64) || defined(_M_I86) || defined(sun386) || defined(__OS2__)
 # define CAT_ISA_X86
 
-#elif defined(TARGET_CPU_ARM) || defined(__ARMEL__) || defined(__ARM__)
+#elif defined(TARGET_CPU_ARM) || defined(__ARMEL__) || defined(__ARM__) || \
+	  defined(__arm__)
 # define CAT_ISA_ARM
+
+#include <arm/arch.h>
+
+#ifdef _ARM_ARCH_8
+# define CAT_ISA_ARMV8
+# define CAT_ISA_ARMV7
+# define CAT_ISA_ARMV6
+#endif
+
+#ifdef _ARM_ARCH_7
+# define CAT_ISA_ARMV7
+# define CAT_ISA_ARMV6
+#endif
+
+#ifdef _ARM_ARCH_6
+# define CAT_ISA_ARMV6
+#endif
 
 #elif defined(__mips__)
 # define CAT_ISA_MIPS

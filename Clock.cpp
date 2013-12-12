@@ -50,6 +50,10 @@ using namespace cat;
 
 #endif
 
+#ifdef CAT_OS_OSX
+# include <mach/mach_time.h>
+#endif
+
 #include <stdlib.h> // qsort
 #include <ctime>
 using namespace std;
@@ -224,7 +228,7 @@ std::string Clock::format(const char *format_string)
 
 
 // Algorithm from Skein test app
-u32 Clock::cycles()
+u32 Clock::cycles(bool sync)
 {
     u32 x[2];
 
@@ -245,10 +249,16 @@ u32 Clock::cycles()
 	CAT_ASM_END
 
 #elif defined(CAT_ASM_ATT) && defined(CAT_ISA_X86)
-	CAT_ASM_BEGIN_VOLATILE
-		"cpuid\n\t"
-		"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx", "ebx", "ecx"
-	CAT_ASM_END
+	if (sync) {
+		CAT_ASM_BEGIN_VOLATILE
+			"cpuid\n\t"
+			"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx", "ebx", "ecx"
+		CAT_ASM_END
+	} else {
+		CAT_ASM_BEGIN_VOLATILE
+			"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx", "ebx", "ecx"
+		CAT_ASM_END
+	}
 
 #elif defined(CAT_ASM_ATT) && defined(CAT_ISA_PPC)
 	// Based on code from Kazutomo Yoshii ( http://www.mcs.anl.gov/~kazutomo/rdtsc.html )
@@ -264,65 +274,40 @@ u32 Clock::cycles()
 		: "=r"(x[1]),"=r"(x[0]),"=r"(tmp)
 	CAT_ASM_END
 
-#else
+#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_ARMV6)
+	// This code is from http://google-perftools.googlecode.com/svn/trunk/src/base/cycleclock.h
+    u32 pmccntr;
+	u32 pmuseren;
+	u32 pmcntenset;
 
-# if defined(CAT_OS_WINDOWS)
-	LARGE_INTEGER tim;
-	QueryPerformanceCounter(&tim);
-	x[0] = tim.LowPart;
-# else
+	// Read the user mode perf monitor counter access permissions.
+	CAT_ASM_BEGIN_VOLATILE
+		"mrc p15, 0, %0, c9, c14, 0"
+		: "=r" (pmuseren)
+	CAT_ASM_END
+
+	if (pmuseren & 1) {  // Allows reading perfmon counters for user mode code.
+		CAT_ASM_BEGIN_VOLATILE
+			"mrc p15, 0, %0, c9, c12, 1"
+			: "=r" (pmcntenset)
+		CAT_ASM_END
+
+		if (pmcntenset & 0x80000000ul) {  // Is it counting?
+			CAT_ASM_BEGIN_VOLATILE
+				"mrc p15, 0, %0, c9, c13, 0"
+				: "=r" (pmccntr)
+			CAT_ASM_END
+
+			// The counter is set up to count every 64th cycle
+			return pmccntr << 6;
+		}
+	}
+
+	// Fall back to gettimeofday
 	struct timeval cateq_v;
 	struct timezone cateq_z;
 	gettimeofday(&cateq_v, &cateq_z);
 	x[0] = (u32)cateq_v.tv_usec;
-# endif
-
-#endif
-
-	CAT_FENCE_COMPILER;
-
-    return x[0];
-}
-
-// Algorithm from Skein test app
-u32 Clock::cycles_fast()
-{
-    u32 x[2];
-
-	CAT_FENCE_COMPILER;
-
-#if defined(CAT_COMPILER_MSVC)
-	x[0] = (u32)__rdtsc();
-
-#elif defined(CAT_ASM_INTEL) && defined(CAT_ISA_X86)
-	CAT_ASM_BEGIN_VOLATILE
-		push eax
-		push edx
-		CAT_ASM_EMIT 0x0F
-		CAT_ASM_EMIT 0x31
-		mov x[0], eax
-		pop edx
-		pop eax
-	CAT_ASM_END
-
-#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_X86)
-	CAT_ASM_BEGIN_VOLATILE
-		"rdtsc" : "=a"(x[0]), "=d"(x[1]) : : "eax", "edx"
-	CAT_ASM_END
-
-#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_PPC)
-	// Based on code from Kazutomo Yoshii ( http://www.mcs.anl.gov/~kazutomo/rdtsc.html )
-	u32 tmp;
-
-	CAT_ASM_BEGIN_VOLATILE
-		"0:                  \n"
-		"\tmftbu   %0        \n"
-		"\tmftb    %1        \n"
-		"\tmftbu   %2        \n"
-		"\tcmpw    %2,%0     \n"
-		"\tbne     0b        \n"
-		: "=r"(x[1]),"=r"(x[0]),"=r"(tmp)
-	CAT_ASM_END
 
 #else
 
@@ -330,6 +315,8 @@ u32 Clock::cycles_fast()
 	LARGE_INTEGER tim;
 	QueryPerformanceCounter(&tim);
 	x[0] = tim.LowPart;
+# elif defined(CAT_OS_OSX)
+	return (u32)mach_absolute_time();
 # else
 	struct timeval cateq_v;
 	struct timezone cateq_z;

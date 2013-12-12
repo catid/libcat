@@ -52,12 +52,11 @@ public:
 	bool OnInitialize();
 	void OnFinalize();
 
-	static u32 sec();			// Timestamp in seconds
-    u32 msec_fast();			// Timestamp in milliseconds, less accurate than msec() but faster
-    u32 msec();					// Timestamp in milliseconds
-	double usec();				// Timestamp in microseconds
-	static u32 cycles_fast();	// Timestamp in cycles without cpuid sync
-	static u32 cycles();		// Timestamp in cycles
+	static u32 sec();						// Timestamp in seconds
+    u32 msec_fast();						// Timestamp in milliseconds, less accurate than msec() but faster
+    u32 msec();								// Timestamp in milliseconds
+	double usec();							// Timestamp in microseconds
+	static u32 cycles(bool sync = true);	// Timestamp in cycles (optionally sync)
 
 #ifdef CAT_CLOCK_EXTRA
 
