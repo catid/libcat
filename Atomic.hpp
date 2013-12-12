@@ -85,7 +85,7 @@ void Atomic::DataMemoryBarrier()
 # if defined(CAT_COMPILER_MSVC)
 	_mm_mfence();
 # elif defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "mfence" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "mfence" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -94,7 +94,7 @@ void Atomic::DataMemoryBarrier()
 #elif defined(CAT_ISA_IBM_POWER)
 
 # if defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "dcs" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "dcs" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -103,7 +103,7 @@ void Atomic::DataMemoryBarrier()
 #elif defined(CAT_ISA_PPC)
 
 # if defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "sync" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "sync" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -112,7 +112,7 @@ void Atomic::DataMemoryBarrier()
 #elif defined(CAT_ISA_ARM)
 
 # if defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "dmb" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "dmb" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -136,7 +136,7 @@ void Atomic::StoreMemoryBarrier()
 # if defined(CAT_COMPILER_MSVC)
 	_mm_sfence();
 # elif defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "sfence" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "sfence" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -158,7 +158,7 @@ void Atomic::LoadMemoryBarrier()
 # if defined(CAT_COMPILER_MSVC)
 	_mm_lfence();
 # elif defined(CAT_ASM_INTEL) || defined(CAT_ASM_ATT)
-	CAT_ASM_BEGIN "lfence" CAT_ASM_END
+	CAT_ASM_BEGIN_VOLATILE "lfence" CAT_ASM_END
 # else
 #  define CAT_NO_STORE_MEMORY_BARRIER
 # endif
@@ -195,7 +195,7 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 	u128 *expected = (u128*)expected_old_value;
 	bool retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; CMPXCHG16B %0\n\t"
 		"sete %%al"
 		: "=m" (*target), "=a" (retval)
@@ -205,6 +205,10 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 
 	CAT_FENCE_COMPILER
     return retval;
+
+#elif defined(CAT_COMPILER_GCC)
+	
+	return __atomic_compare_exchange_n((u64 *)x, (u64 *)expected_old_value, *(const u64 *)new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 
 #else
 
@@ -238,7 +242,7 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_ISA_X86)
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		push ebx
         mov eax, new_value
 		push esi
@@ -264,7 +268,7 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 	u64 *expected = (u64*)expected_old_value;
 	bool retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; CMPXCHG8B %0\n\t"
 		"sete %%al"
 		: "=m" (*target), "=a" (retval)
@@ -274,6 +278,10 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 
 	CAT_FENCE_COMPILER
     return retval;
+
+#elif defined(CAT_COMPILER_GCC)
+
+	return __atomic_compare_exchange_n((u32 *)x, (u32 *)expected_old_value, *(const u32 *)new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 
 #else
 
@@ -307,7 +315,7 @@ u32 Atomic::Add(volatile u32 *x, s32 y)
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_WORD_32) && defined(CAT_ISA_X86)
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
         mov edx,x
         mov eax,y
         lock XADD [edx],eax
@@ -319,7 +327,7 @@ u32 Atomic::Add(volatile u32 *x, s32 y)
 
 	u32 retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; XADDl %%eax, %0\n\t"
 		: "=m" (*x), "=a" (retval)
 		: "m" (*x), "a" (y)
@@ -329,6 +337,10 @@ u32 Atomic::Add(volatile u32 *x, s32 y)
 	CAT_FENCE_COMPILER
     return retval;
 
+#elif defined(CAT_COMPILER_GCC)
+
+	return __atomic_fetch_add(x, y, __ATOMIC_SEQ_CST);
+	
 #else
 
 #define CAT_NO_ATOMIC_ADD /* Platform/compiler does not support atomic add */
@@ -362,7 +374,7 @@ u32 Atomic::Set(volatile u32 *x, u32 new_value)
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_WORD_32) && defined(CAT_ISA_X86)
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
         mov edx,x
         mov eax,new_value
         lock XCHG [edx],eax
@@ -374,7 +386,7 @@ u32 Atomic::Set(volatile u32 *x, u32 new_value)
 
 	u32 retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; XCHGl %%eax, %0\n\t"
 		: "=m" (*x), "=a" (retval)
 		: "m" (*x), "a" (new_value)
@@ -383,6 +395,10 @@ u32 Atomic::Set(volatile u32 *x, u32 new_value)
 
 	CAT_FENCE_COMPILER
     return retval;
+
+#elif defined(CAT_COMPILER_GCC)
+	
+	return __atomic_exchange_n(x, new_value, __ATOMIC_SEQ_CST);
 
 #else
 
@@ -417,7 +433,7 @@ bool Atomic::BTS(volatile u32 *x, int bit)
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_WORD_32) && defined(CAT_ISA_X86)
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
         mov edx,x
         mov ecx,bit
         lock BTS [edx],ecx
@@ -430,7 +446,7 @@ bool Atomic::BTS(volatile u32 *x, int bit)
 
 	bool retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; BTSl %2, %0\n\t"
 		"sbbl %%eax, %%eax"
 		: "=m" (*x), "=a" (retval)
@@ -440,6 +456,10 @@ bool Atomic::BTS(volatile u32 *x, int bit)
 
 	CAT_FENCE_COMPILER
     return retval;
+
+#elif defined(CAT_COMPILER_GCC)
+
+	return (__atomic_fetch_or(x, 1 << bit, __ATOMIC_SEQ_CST) >> bit) & 1;
 
 #else
 
@@ -476,7 +496,7 @@ bool Atomic::BTR(volatile u32 *x, int bit)
 
 #elif defined(CAT_ASM_INTEL) && defined(CAT_WORD_32) && defined(CAT_ISA_X86)
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
         mov edx,x
         mov ecx,bit
         lock BTR [edx],ecx
@@ -489,7 +509,7 @@ bool Atomic::BTR(volatile u32 *x, int bit)
 
 	bool retval;
 
-    CAT_ASM_BEGIN
+    CAT_ASM_BEGIN_VOLATILE
 		"lock; BTRl %2, %0\n\t"
 		"sbbl %%eax, %%eax"
 		: "=m" (*x), "=a" (retval)
@@ -499,6 +519,10 @@ bool Atomic::BTR(volatile u32 *x, int bit)
 
 	CAT_FENCE_COMPILER
     return retval;
+
+#elif defined(CAT_COMPILER_GCC)
+
+	return (__atomic_fetch_and(x, ~(u32)(1 << bit), __ATOMIC_SEQ_CST) >> bit) & 1;
 
 #else
 
