@@ -54,7 +54,6 @@ using namespace cat;
 # include <mach/mach_time.h>
 #endif
 
-#include <stdlib.h> // qsort
 #include <ctime>
 using namespace std;
 
@@ -175,9 +174,6 @@ double Clock::usec()
 }
 
 
-#ifdef CAT_CLOCK_EXTRA
-
-
 void Clock::sleep(u32 milliseconds)
 {
 #if defined(CAT_OS_WINDOWS)
@@ -192,38 +188,6 @@ void Clock::sleep(u32 milliseconds)
 	while (nanosleep(&ts, &ts) == -1);
 
 #endif
-}
-
-
-std::string Clock::format(const char *format_string)
-{
-    char ts[256];
-
-    struct tm *pLocalTime;
-
-#if defined(CAT_OS_WINDOWS)
-# if defined(CAT_COMPILER_MSVC)
-    struct tm localTime;
-    __time64_t long_time;
-    _time64(&long_time);
-    _localtime64_s(&localTime, &long_time);
-    pLocalTime = &localTime;
-# else
-    // MinGW doesn't support 64-bit stuff very well yet...
-    time_t long_time;
-    time(&long_time);
-    pLocalTime = localtime(&long_time);
-# endif
-#else
-    struct tm localTime;
-    time_t long_time;
-    localtime_r(&long_time, &localTime);
-    pLocalTime = &localTime;
-#endif
-
-    strftime(ts, sizeof(ts), format_string, pLocalTime);
-
-    return ts;
 }
 
 
@@ -329,6 +293,41 @@ u32 Clock::cycles(bool sync)
 	CAT_FENCE_COMPILER;
 
     return x[0];
+}
+
+
+#ifdef CAT_CLOCK_EXTRA
+
+
+std::string Clock::format(const char *format_string)
+{
+    char ts[256];
+
+    struct tm *pLocalTime;
+
+#if defined(CAT_OS_WINDOWS)
+# if defined(CAT_COMPILER_MSVC)
+    struct tm localTime;
+    __time64_t long_time;
+    _time64(&long_time);
+    _localtime64_s(&localTime, &long_time);
+    pLocalTime = &localTime;
+# else
+    // MinGW doesn't support 64-bit stuff very well yet...
+    time_t long_time;
+    time(&long_time);
+    pLocalTime = localtime(&long_time);
+# endif
+#else
+    struct tm localTime;
+    time_t long_time;
+    localtime_r(&long_time, &localTime);
+    pLocalTime = &localTime;
+#endif
+
+    strftime(ts, sizeof(ts), format_string, pLocalTime);
+
+    return ts;
 }
 
 

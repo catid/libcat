@@ -35,7 +35,7 @@
 namespace cat {
 
 
-#define CAT_CLOCK_EXTRA
+//#define CAT_CLOCK_EXTRA
 
 
 class CAT_EXPORT Clock
@@ -57,12 +57,11 @@ public:
     u32 msec();								// Timestamp in milliseconds
 	double usec();							// Timestamp in microseconds
 	static u32 cycles(bool sync = true);	// Timestamp in cycles (optionally sync)
+    static void sleep(u32 milliseconds);
 
 #ifdef CAT_CLOCK_EXTRA
 
     static std::string format(const char *format_string);
-
-    static void sleep(u32 milliseconds);
 
     static u32 MeasureClocks(int iterations, void (*FunctionPtr)());
 
