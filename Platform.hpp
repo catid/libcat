@@ -288,6 +288,18 @@ namespace cat {
 	  defined(__arm__)
 # define CAT_ISA_ARM
 
+#ifdef __ANDROID__
+
+#if (__ARM_ARCH >= 6)
+# define CAT_ISA_ARMV6
+#endif
+
+#if (__ARM_ARCH >= 7)
+# define CAT_ISA_ARMV7
+#endif
+
+#else // Assumes iOS
+
 #include <arm/arch.h>
 
 #ifdef _ARM_ARCH_8
@@ -303,6 +315,8 @@ namespace cat {
 
 #ifdef _ARM_ARCH_6
 # define CAT_ISA_ARMV6
+#endif
+
 #endif
 
 #elif defined(__mips__)
@@ -454,8 +468,12 @@ namespace cat {
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
 # define CAT_OS_BSD
 
-#elif defined(__linux__) || defined(__unix__)
+#elif defined(__linux__) || defined(__unix__) || defined(__unix)
 # define CAT_OS_LINUX
+
+#ifdef __ANDROID__
+# define CAT_OS_ANDROID
+#endif
 
 #elif defined(_WIN32_WCE)
 # define CAT_OS_WINDOWS_CE

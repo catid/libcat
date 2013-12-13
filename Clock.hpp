@@ -29,13 +29,15 @@
 #ifndef CAT_CLOCK_HPP
 #define CAT_CLOCK_HPP
 
+//#define CAT_CLOCK_EXTRA
+
 #include "Platform.hpp"
+
+#ifdef CAT_CLOCK_EXTRA
 #include <string>
+#endif
 
 namespace cat {
-
-
-//#define CAT_CLOCK_EXTRA
 
 
 class CAT_EXPORT Clock
