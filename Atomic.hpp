@@ -120,6 +120,14 @@ void Atomic::DataMemoryBarrier()
 #else
 # define CAT_NO_STORE_MEMORY_BARRIER
 #endif
+
+#ifdef CAT_NO_STORE_MEMORY_BARRIER
+	// If no assembly code memory barrier could be emitted:
+#ifdef CAT_COMPILER_GCC
+	__sync_synchronize();
+#undef CAT_NO_STORE_MEMORY_BARRIER
+#endif
+#endif
 }
 
 // Insure all stores are flushed before proceeding (implicitly uses CAT_FENCE_COMPILER)
@@ -208,7 +216,7 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 
 #elif defined(CAT_COMPILER_GCC)
 	
-	return __atomic_compare_exchange_n((u64 *)x, (u64 *)expected_old_value, *(const u64 *)new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+	return __sync_val_compare_and_swap((u64 *)x, *(u64 *)expected_old_value, *(const u64 *)new_value);
 
 #else
 
@@ -281,7 +289,7 @@ bool Atomic::CAS2(volatile void *x, const void *expected_old_value, const void *
 
 #elif defined(CAT_COMPILER_GCC)
 
-	return __atomic_compare_exchange_n((u32 *)x, (u32 *)expected_old_value, *(const u32 *)new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+	return __sync_val_compare_and_swap((u32 *)x, *(u32 *)expected_old_value, *(const u32 *)new_value);
 
 #else
 
@@ -339,7 +347,7 @@ u32 Atomic::Add(volatile u32 *x, s32 y)
 
 #elif defined(CAT_COMPILER_GCC)
 
-	return __atomic_fetch_add(x, y, __ATOMIC_SEQ_CST);
+	return __sync_fetch_and_add(x, y);
 	
 #else
 
@@ -396,8 +404,8 @@ u32 Atomic::Set(volatile u32 *x, u32 new_value)
 	CAT_FENCE_COMPILER
     return retval;
 
-#elif defined(CAT_COMPILER_GCC)
-	
+#elif defined(CAT_COMPILER_GCC) && defined(__atomic_exchange_n)
+
 	return __atomic_exchange_n(x, new_value, __ATOMIC_SEQ_CST);
 
 #else
@@ -459,7 +467,7 @@ bool Atomic::BTS(volatile u32 *x, int bit)
 
 #elif defined(CAT_COMPILER_GCC)
 
-	return (__atomic_fetch_or(x, 1 << bit, __ATOMIC_SEQ_CST) >> bit) & 1;
+	return (__sync_fetch_and_or(x, 1 << bit) >> bit) & 1;
 
 #else
 
@@ -522,7 +530,7 @@ bool Atomic::BTR(volatile u32 *x, int bit)
 
 #elif defined(CAT_COMPILER_GCC)
 
-	return (__atomic_fetch_and(x, ~(u32)(1 << bit), __ATOMIC_SEQ_CST) >> bit) & 1;
+	return (__sync_fetch_and_and(x, ~(u32)(1 << bit)) >> bit) & 1;
 
 #else
 
