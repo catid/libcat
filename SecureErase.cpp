@@ -33,7 +33,11 @@ using namespace cat;
 typedef u64 vec_block __attribute__((ext_vector_type(4)));
 #endif
 
-void cat_memset_s(volatile void *data, int len) {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void cat_secure_erase(volatile void *data, int len) {
 	// Calculate number of 64-bit words to erase, usually a multiple of 32 bytes
 	int words = len >> 3;
 
@@ -49,11 +53,14 @@ void cat_memset_s(volatile void *data, int len) {
 		word[1] = 0;
 		word[2] = 0;
 		word[3] = 0;
-#endif
+#endif // CAT_HAS_VECTOR_EXTENSIONS
 		words -= 4;
 	}
 
 	// Erase any remaining words
+#ifdef CAT_HAS_VECTOR_EXTENSIONS
+	volatile u64 *word = (volatile u64 *)block;
+#endif
 	while (words > 0) {
 		*word++ = 0;
 		--words;
@@ -88,4 +95,8 @@ void cat_memset_s(volatile void *data, int len) {
 		break;
 	}
 }
+
+#ifdef __cplusplus
+}
+#endif
 

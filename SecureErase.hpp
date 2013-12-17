@@ -45,12 +45,12 @@ extern "C" {
 // If on Windows,
 #if defined(CAT_OS_WINDOWS) && !defined(CAT_OS_WINDOWS_CE) && !defined(CAT_COMPILER_MINGW)
 // Use the MSVC intrinsic
-# define cat_memset_s(dest, len) SecureZeroMemory(dest, len)
+# define cat_secure_erase(dest, len) SecureZeroMemory(dest, len)
 #else
-extern void cat_memset_s(volatile void *dest, int len);
+extern void cat_secure_erase(volatile void *dest, int len);
 #endif
 
-#define CAT_SECURE_OBJCLR(obj) cat_memset_s((void*)&(obj), (int)sizeof(obj))
+#define CAT_SECURE_OBJCLR(obj) cat_secure_erase((void*)&(obj), (int)sizeof(obj))
 
 #ifdef __cplusplus
 }
