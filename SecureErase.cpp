@@ -45,9 +45,9 @@ void cat_secure_erase(volatile void *data, int len) {
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
 	volatile u64 *word;
 #ifdef CAT_WORD_64
-	if CAT_UNLIKELY(*(u64*)&data & 15) {
+	if (*(u64*)&data & 15) {
 #else
-	if CAT_UNLIKELY(*(u32*)&data & 15) {
+	if (*(u32*)&data & 15) {
 #endif
 		word = (volatile u64 *)data;
 		while (words >= 4) {
