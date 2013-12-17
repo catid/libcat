@@ -43,9 +43,29 @@ void cat_secure_erase(volatile void *data, int len) {
 
 	// Bulk erase blocks of 32 bytes at a time
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
-	volatile vec_block *block = (volatile vec_block *)data;
-	while (words >= 4) {
-		*block++ = 0;
+	volatile u64 *word;
+#ifdef CAT_WORD_64
+	if CAT_UNLIKELY(*(u64*)&data & 15) {
+#else
+	if CAT_UNLIKELY(*(u32*)&data & 15) {
+#endif
+		word = (volatile u64 *)data;
+		while (words >= 4) {
+			word[0] = 0;
+			word[1] = 0;
+			word[2] = 0;
+			word[3] = 0;
+			words -= 4;
+		}
+	} else {
+		// Usual case:
+		volatile vec_block *block = (volatile vec_block *)data;
+		while (words >= 4) {
+			*block++ = 0;
+			words -= 4;
+		}
+		word = (volatile u64 *)block;
+	}
 #else
 	volatile u64 *word = (volatile u64 *)data;
 	while (words >= 4) {
@@ -53,14 +73,11 @@ void cat_secure_erase(volatile void *data, int len) {
 		word[1] = 0;
 		word[2] = 0;
 		word[3] = 0;
-#endif // CAT_HAS_VECTOR_EXTENSIONS
 		words -= 4;
 	}
+#endif // CAT_HAS_VECTOR_EXTENSIONS
 
 	// Erase any remaining words
-#ifdef CAT_HAS_VECTOR_EXTENSIONS
-	volatile u64 *word = (volatile u64 *)block;
-#endif
 	while (words > 0) {
 		*word++ = 0;
 		--words;
