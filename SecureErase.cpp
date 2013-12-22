@@ -49,6 +49,7 @@ void cat_secure_erase(volatile void *data, int len) {
 #else
 	if (*(u32*)&data & 15) {
 #endif
+#endif
 		word = (volatile u64 *)data;
 		while (words >= 4) {
 			word[0] = 0;
@@ -57,6 +58,7 @@ void cat_secure_erase(volatile void *data, int len) {
 			word[3] = 0;
 			words -= 4;
 		}
+#ifdef CAT_HAS_VECTOR_EXTENSIONS
 	} else {
 		// Usual case:
 		volatile vec_block *block = (volatile vec_block *)data;
@@ -65,15 +67,6 @@ void cat_secure_erase(volatile void *data, int len) {
 			words -= 4;
 		}
 		word = (volatile u64 *)block;
-	}
-#else
-	volatile u64 *word = (volatile u64 *)data;
-	while (words >= 4) {
-		word[0] = 0;
-		word[1] = 0;
-		word[2] = 0;
-		word[3] = 0;
-		words -= 4;
 	}
 #endif // CAT_HAS_VECTOR_EXTENSIONS
 
