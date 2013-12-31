@@ -93,3 +93,4 @@ public:
 } // namespace cat
 
 #endif // CAT_THREAD_HPP
+

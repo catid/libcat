@@ -33,29 +33,28 @@ using namespace cat;
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-// Fix missing definitions (mainly for MinGW)
+// Fix missing definitions (mainly for MinGW):
+
 #if !defined(IPV6_V6ONLY)
-#define IPV6_V6ONLY 27
+# define IPV6_V6ONLY 27
 #endif
+
 #if !defined(SIO_UDP_CONNRESET)
-#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
+# define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
 #endif
 
 
 //// Socket
 
-Socket::Socket()
-{
+Socket::Socket() {
 	_s = INVALID_SOCKET;
 }
 
-Socket::~Socket()
-{
+Socket::~Socket() {
 	Close();
 }
 
-Port Socket::GetPort()
-{
+Port Socket::GetPort() {
 	if (_port == 0) {
 		_port = Sockets::GetBoundPort(_s);
 	}
@@ -63,8 +62,7 @@ Port Socket::GetPort()
 	return _port;
 }
 
-bool Socket::Create(int type, int protocol, bool SupportIPv6, bool SupportIPv4)
-{
+bool Socket::Create(int type, int protocol, bool SupportIPv6, bool SupportIPv4) {
 	Close();
 
 	SocketHandle s;
@@ -80,9 +78,9 @@ bool Socket::Create(int type, int protocol, bool SupportIPv6, bool SupportIPv4)
 	return true;
 }
 
-bool Socket::SetSendBufferSize(int bytes)
-{
+bool Socket::SetSendBufferSize(int bytes) {
 	int snd_buffsize = bytes;
+
 	if (setsockopt(_s, SOL_SOCKET, SO_SNDBUF, (char *)&snd_buffsize, sizeof(snd_buffsize))) {
 		return false;
 	}
@@ -90,9 +88,9 @@ bool Socket::SetSendBufferSize(int bytes)
 	return true;
 }
 
-bool Socket::SetRecvBufferSize(int bytes)
-{
+bool Socket::SetRecvBufferSize(int bytes) {
 	int rcv_buffsize = bytes;
+
 	if (setsockopt(_s, SOL_SOCKET, SO_RCVBUF, (char *)&rcv_buffsize, sizeof(rcv_buffsize))) {
 		return false;
 	}
@@ -100,8 +98,7 @@ bool Socket::SetRecvBufferSize(int bytes)
 	return true;
 }
 
-bool Socket::Bind(Port port)
-{
+bool Socket::Bind(Port port) {
 	// Bind the socket to a given port
 	if (!Sockets::NetBind(_s, port, _support6)) {
 		CloseSocketHandle(_s);
@@ -112,8 +109,7 @@ bool Socket::Bind(Port port)
 	return true;
 }
 
-void Socket::Close()
-{
+void Socket::Close() {
 	if (_s != INVALID_SOCKET) {
 		CloseSocketHandle(_s);
 	}
@@ -122,18 +118,20 @@ void Socket::Close()
 
 //// UDP Socket
 
-bool UDPSocket::IgnoreUnreachable(bool ignore)
-{
+bool UDPSocket::IgnoreUnreachable(bool ignore) {
 	// FALSE = Disable behavior where, after receiving an ICMP Unreachable message,
 	// WSARecvFrom() will fail.  Disables ICMP completely; normally this is good.
 	// But when you're writing a client endpoint, you probably want to listen to
 	// ICMP Port Unreachable or other failures until you get the first packet.
 	// After that call IgnoreUnreachable() to avoid spoofed ICMP exploits.
 
+#ifdef CAT_OS_WINDOWS
 	DWORD behavior = ignore ? FALSE : TRUE;
+
 	if (ioctlsocket(GetSocket(), SIO_UDP_CONNRESET, &behavior) == SOCKET_ERROR) {
 		return false;
 	}
+#endif
 
 	return true;
 }
@@ -141,6 +139,7 @@ bool UDPSocket::IgnoreUnreachable(bool ignore)
 bool UDPSocket::DontFragment(bool df)
 {
 	DWORD behavior = df ? TRUE : FALSE;
+
 	if (setsockopt(GetSocket(), IPPROTO_IP, IP_DONTFRAGMENT, (const char *)&behavior, sizeof(behavior))) {
 		return false;
 	}
@@ -151,8 +150,7 @@ bool UDPSocket::DontFragment(bool df)
 
 //// Sockets
 
-bool Sockets::OnInitialize()
-{
+bool Sockets::OnInitialize() {
 #if defined(CAT_OS_WINDOWS)
 	WSADATA wsaData;
 
@@ -165,23 +163,20 @@ bool Sockets::OnInitialize()
 	return true;
 }
 
-void Sockets::OnFinalize()
-{
+void Sockets::OnFinalize() {
 #if defined(CAT_OS_WINDOWS)
 	WSACleanup();
 #endif
 }
 
-bool Sockets::AllowIPv4OnIPv6Socket(SocketHandle s)
-{
+bool Sockets::AllowIPv4OnIPv6Socket(SocketHandle s) {
 	int on = 0;
 
 	// Turn off IPV6_V6ONLY so that IPv4 is able to communicate with the socket also
 	return 0 == setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on, sizeof(on));
 }
 
-bool Sockets::Create(int type, int protocol, bool RequireIPv4, bool &SupportIPv6, SocketHandle &out_s)
-{
+bool Sockets::Create(int type, int protocol, bool RequireIPv4, bool &SupportIPv6, SocketHandle &out_s) {
 	// If IPv6 support requested,
 	if (SupportIPv6) {
 		// Attempt to create an IPv6 socket
@@ -222,8 +217,7 @@ bool Sockets::Create(int type, int protocol, bool RequireIPv4, bool &SupportIPv6
 	return true;
 }
 
-bool Sockets::NetBind(SocketHandle s, Port port, bool SupportIPv6)
-{
+bool Sockets::NetBind(SocketHandle s, Port port, bool SupportIPv6) {
 	if (s == SOCKET_ERROR) {
 		return false;
 	}
@@ -257,8 +251,7 @@ bool Sockets::NetBind(SocketHandle s, Port port, bool SupportIPv6)
 	return 0 == bind(s, reinterpret_cast<sockaddr*>( &addr ), addr_len);
 }
 
-Port Sockets::GetBoundPort(SocketHandle s)
-{
+Port Sockets::GetBoundPort(SocketHandle s) {
 	sockaddr_in6 addr;
 	int namelen = sizeof(addr);
 
@@ -271,8 +264,7 @@ Port Sockets::GetBoundPort(SocketHandle s)
 	return ntohs(addr.sin6_port);
 }
 
-const char *Sockets::GetLastErrorString()
-{
+const char *Sockets::GetLastErrorString() {
 	int code;
 
 #if defined(CAT_OS_WINDOWS)
@@ -284,8 +276,7 @@ const char *Sockets::GetLastErrorString()
 	return GetErrorString(code);
 }
 
-const char *Sockets::GetErrorString(int code)
-{
+const char *Sockets::GetErrorString(int code) {
 	switch (code)
 	{
 #if defined(CAT_OS_WINDOWS)
@@ -341,8 +332,7 @@ const char *Sockets::GetErrorString(int code)
 
 //// UNetAddr
 
-bool UNetAddr::Wrap(const sockaddr_in &addr)
-{
+bool UNetAddr::Wrap(const sockaddr_in &addr) {
 	// Can only fit IPv4 in this address structure
 	if (addr.sin_family == AF_INET)
 	{
@@ -361,13 +351,11 @@ bool UNetAddr::Wrap(const sockaddr_in &addr)
 	}
 }
 
-bool UNetAddr::Wrap(const sockaddr *addr)
-{
+bool UNetAddr::Wrap(const sockaddr *addr) {
 	u16 family = addr->sa_family;
 
 	// Based on the family of the sockaddr,
-	if (family == AF_INET)
-	{
+	if (family == AF_INET) {
 		const sockaddr_in *addr4 = reinterpret_cast<const sockaddr_in*>( addr );
 		Port port = ntohs(addr4->sin_port);
 		u32 ip = addr4->sin_addr.S_un.S_addr;
@@ -376,9 +364,7 @@ bool UNetAddr::Wrap(const sockaddr *addr)
 		_port = port;
 		_ip.v4 = ip;
 		return true;
-	}
-	else if (family == AF_INET6)
-	{
+	} else if (family == AF_INET6) {
 		const sockaddr_in6 *addr6 = reinterpret_cast<const sockaddr_in6*>( addr );
 		Port port = ntohs(addr6->sin6_port);
 
@@ -387,49 +373,39 @@ bool UNetAddr::Wrap(const sockaddr *addr)
 		_family = AF_INET6;
 		_port = port;
 		return true;
-	}
-	else
-	{
+	} else {
 		// Other address families not supported, so make object invalid
 		_valid = 0;
 		return false;
 	}
 }
 
-bool UNetAddr::EqualsIPOnly(const UNetAddr &addr) const
-{
+bool UNetAddr::EqualsIPOnly(const UNetAddr &addr) const {
 	// If one is IPv4 and the other is IPv6,
-	if (_family != addr._family)
+	if (_family != addr._family) {
 		return false; // "not equal"
+	}
 
 	// Compare IP addresses based on address family:
 
-	if (_family == AF_INET)
-	{
+	if (_family == AF_INET) {
 		// Compare 32-bit IPv4 addresses
 		return _ip.v4 == addr._ip.v4;
-	}
-	else if (_family == AF_INET6)
-	{
+	} else if (_family == AF_INET6) {
 		// Compare 128-bit IPv6 addresses
 		return 0 == ((_ip.v6[0] ^ addr._ip.v6[0]) |
 					 (_ip.v6[1] ^ addr._ip.v6[1]));
-	}
-	else
-	{
+	} else {
 		// If either address is invalid,
 		return false; // "not equal"
 	}
 }
 
-bool UNetAddr::IsInternetRoutable()
-{
-	if (_family == AF_INET)
-	{
+bool UNetAddr::IsInternetRoutable() {
+	if (_family == AF_INET) {
 		u32 ipv4 = ntohl(_ip.v4);
 
-		switch ((u8)(ipv4 >> 24))
-		{
+		switch ((u8)(ipv4 >> 24)) {
 		case   0: // This Net: 0.0.0.0
 		case  10: // Private: 10/8
 		case 127: // Loopback: 127/8
@@ -450,43 +426,41 @@ bool UNetAddr::IsInternetRoutable()
 			// Otherwise it is Internet routable
 			return true;
 		}
-	}
-	else if (_family == AF_INET6)
-	{
+	} else if (_family == AF_INET6) {
 		// Site-local addresses (fec0:/16) [may be deprecated now...]
-		if (_ip.v6_words[0] == 0xfec0) return false;
+		if (_ip.v6_words[0] == 0xfec0) {
+			return false;
+		}
 
 		// Link-local addresses (fe80:/16)
-		if (_ip.v6_words[0] == 0xfe80) return false;
+		if (_ip.v6_words[0] == 0xfe80) {
+			return false;
+		}
 
 		// Unique local addresses (fc00:/7)
-		if ((_ip.v6_words[0] & 0xfe00) == 0xfc00) return false;
+		if ((_ip.v6_words[0] & 0xfe00) == 0xfc00) {
+			return false;
+		}
 
 		// Loopback address (::1)
 		if (_ip.v6[0] == 0 && _ip.v6_words[4] == 0 &&
 			_ip.v6_words[5] == 0 && _ip.v6_words[6] == 0 &&
-			_ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1)
-		{
+			_ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1) {
 			return false;
 		}
 
 		return true;
-	}
-	else
-	{
+	} else {
 		// Catches invalid addresses
 		return false;
 	}
 }
 
-bool UNetAddr::IsRoutable()
-{
-	if (_family == AF_INET)
-	{
+bool UNetAddr::IsRoutable() {
+	if (_family == AF_INET) {
 		u32 ipv4 = ntohl(_ip.v4);
 
-		switch ((u8)(ipv4 >> 24))
-		{
+		switch ((u8)(ipv4 >> 24)) {
 		case   0: // This Net: 0.0.0.0
 		case 127: // Loopback: 127/8
 		case 255: // Broadcast: 255.255.255.255
@@ -496,67 +470,53 @@ bool UNetAddr::IsRoutable()
 			// Otherwise it is routable
 			return true;
 		}
-	}
-	else if (_family == AF_INET6)
-	{
-		if (_ip.v6[0] == 0)
-		{
+	} else if (_family == AF_INET6) {
+		if (_ip.v6[0] == 0) {
 			// Invalid address (::)
-			if (_ip.v6[1] == 0)
-			{
+			if (_ip.v6[1] == 0) {
 				return false;
 			}
 
 			// Loopback address (::1)
 			if (_ip.v6_bytes[15] == 1 &&
 				_ip.v6_words[4] == 0 && _ip.v6_words[5] == 0 &&
-				_ip.v6_words[6] == 0 && _ip.v6_bytes[14] == 0)
-			{
+				_ip.v6_words[6] == 0 && _ip.v6_bytes[14] == 0) {
 				return false;
 			}
 		}
 
 		return true;
-	}
-	else
-	{
+	} else {
 		// Catches invalid addresses
 		return false;
 	}
 }
 
-bool UNetAddr::SetFromString(const char *ip_str, Port port)
-{
+bool UNetAddr::SetFromString(const char *ip_str, Port port) {
 	// Try to convert from IPv6 address first
 	sockaddr_in6 addr6;
 	int out_addr_len6 = sizeof(addr6);
 
 	if (!WSAStringToAddressA((char*)ip_str, AF_INET6, 0,
-							 (sockaddr*)&addr6, &out_addr_len6))
-	{
+							 (sockaddr*)&addr6, &out_addr_len6)) {
 		// Copy address from temporary object
 		_family = AF_INET6;
 		_port = port;
 		memcpy(_ip.v6, &addr6.sin6_addr, sizeof(_ip.v6));
 		return true;
-	}
-	else
-	{
+	} else {
 		// Try to convert from IPv4 address if that failed
 		sockaddr_in addr4;
 		int out_addr_len4 = sizeof(addr4);
 
 		if (!WSAStringToAddressA((char*)ip_str, AF_INET, 0,
-								 (sockaddr*)&addr4, &out_addr_len4))
-		{
+								 (sockaddr*)&addr4, &out_addr_len4)) {
 			// Copy address from temporary object
 			_family = AF_INET;
 			_port = port;
 			_ip.v4 = addr4.sin_addr.S_un.S_addr;
 			return true;
-		}
-		else
-		{
+		} else {
 			// Otherwise mark address as invalid and return false
 			_valid = 0;
 			return false;
@@ -564,41 +524,31 @@ bool UNetAddr::SetFromString(const char *ip_str, Port port)
 	}
 }
 
-bool UNetAddr::SetFromRawIP(const u8 *ip_binary, int bytes)
-{
-	if (bytes == IP4_BYTES)
-	{
+bool UNetAddr::SetFromRawIP(const u8 *ip_binary, int bytes) {
+	if (bytes == IP4_BYTES) {
 		const u32 *ipv4 = reinterpret_cast<const u32*>( ip_binary );
 
 		_family = AF_INET;
 		_ip.v4 = *ipv4; // Endian agnostic
 		// Does not touch port
 		return true;
-	}
-	else if (bytes == IP6_BYTES)
-	{
+	} else if (bytes == IP6_BYTES) {
 		_family = AF_INET6;
 		memcpy(_ip.v6_bytes, ip_binary, IP6_BYTES); // Endian agnostic
 		// Does not touch port
 		return true;
-	}
-	else
-	{
+	} else {
 		// Otherwise mark address as invalid and return false
 		_valid = 0;
 		return false;
 	}
 }
 
-bool UNetAddr::SetFromDotDecimals(int a, int b, int c, int d, Port port)
-{
-	if ((a | b | c | d) & 0xFFFFFF00)
-	{
+bool UNetAddr::SetFromDotDecimals(int a, int b, int c, int d, Port port) {
+	if ((a | b | c | d) & 0xFFFFFF00) {
 		_valid = 0;
 		return false;
-	}
-	else
-	{
+	} else {
 		_family = AF_INET;
 		_port = port;
 
@@ -607,8 +557,7 @@ bool UNetAddr::SetFromDotDecimals(int a, int b, int c, int d, Port port)
 	}
 }
 
-const char *UNetAddr::IPToString(char *buffer, int bytes) const
-{
+const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 	// If input is invalid,
 	if (!buffer || bytes < 8) {
 		return "[IP buffer too small]";
@@ -654,13 +603,10 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const
 	}
 }
 
-bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const
-{
-	if (_family == AF_INET)
-	{
+bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const {
+	if (_family == AF_INET) {
 		// If the user wants us to unwrap to an IPv6 address,
-		if (PromoteToIP6)
-		{
+		if (PromoteToIP6) {
 			sockaddr_in6 *addr6 = reinterpret_cast<sockaddr_in6*>( &addr );
 
 			CAT_OBJCLR(*addr6);
@@ -670,12 +616,9 @@ bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const
 			u32 ipv4 = ntohl(_ip.v4);
 
 			// If loopback,
-			if ((ipv4 & 0xFF000000) == 0x7F000000)
-			{
+			if ((ipv4 & 0xFF000000) == 0x7F000000) {
 				addr6->sin6_addr.s6_addr[15] = 1;
-			}
-			else
-			{
+			} else {
 				addr6->sin6_addr.s6_addr[10] = 0xFF;
 				addr6->sin6_addr.s6_addr[11] = 0xFF;
 				addr6->sin6_addr.s6_addr[12] = (u8)(ipv4 >> 24);
@@ -685,9 +628,7 @@ bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const
 			}
 
 			addr_len = sizeof(sockaddr_in6);
-		}
-		else
-		{
+		} else {
 			sockaddr_in *addr4 = reinterpret_cast<sockaddr_in*>( &addr );
 
 			addr4->sin_family = AF_INET;
@@ -699,9 +640,7 @@ bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const
 		}
 
 		return true;
-	}
-	else if (_family == AF_INET6)
-	{
+	} else if (_family == AF_INET6) {
 		sockaddr_in6 *addr6 = reinterpret_cast<sockaddr_in6*>( &addr );
 
 		CAT_OBJCLR(*addr6);
@@ -712,22 +651,16 @@ bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const
 		addr_len = sizeof(sockaddr_in6);
 
 		return true;
-	}
-	else
-	{
+	} else {
 		return false;
 	}
 }
 
-bool UNetAddr::PromoteTo6()
-{
-	if (_family == AF_INET6)
-	{
+bool UNetAddr::PromoteTo6() {
+	if (_family == AF_INET6) {
 		// Already IPv6
 		return true;
-	}
-	else if (_family == AF_INET)
-	{
+	} else if (_family == AF_INET) {
 		_family = AF_INET6;
 
 		u32 ipv4 = ntohl(_ip.v4);
@@ -735,13 +668,10 @@ bool UNetAddr::PromoteTo6()
 		_ip.v6[0] = 0;
 
 		// If loopback,
-		if ((ipv4 & 0xFF000000) == 0x7F000000)
-		{
+		if ((ipv4 & 0xFF000000) == 0x7F000000) {
 			_ip.v6[1] = 0;
 			_ip.v6_bytes[15] = 1;
-		}
-		else
-		{
+		} else {
 			_ip.v6_words[4] = 0;
 			_ip.v6_words[5] = 0xFFFF;
 			_ip.v6_bytes[12] = (u8)(ipv4 >> 24);
@@ -751,74 +681,50 @@ bool UNetAddr::PromoteTo6()
 		}
 
 		return true;
-	}
-	else
-	{
+	} else {
 		// Already invalid
 		return false;
 	}
 }
 
-bool UNetAddr::CanDemoteTo4() const
-{
-	if (_family == AF_INET)
-	{
+bool UNetAddr::CanDemoteTo4() const {
+	if (_family == AF_INET) {
 		// Already IPv4
 		return true;
-	}
-	else if (_family == AF_INET6)
-	{
-		if (_ip.v6[0] != 0 || _ip.v6_words[4] != 0)
-		{
+	} else if (_family == AF_INET6) {
+		if (_ip.v6[0] != 0 || _ip.v6_words[4] != 0) {
 			return false;
-		}
-		else if (_ip.v6_words[5] == 0 && _ip.v6_words[6] == 0 &&
-			_ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1)
-		{
+		} else if (_ip.v6_words[5] == 0 && _ip.v6_words[6] == 0 &&
+				   _ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1) {
 			// Loopback
 			return true;
-		}
-		else if (_ip.v6_words[5] == 0xFFFF)
-		{
+		} else if (_ip.v6_words[5] == 0xFFFF) {
 			// Embedded IPv4 address
 			return true;
-		}
-		else
-		{
+		} else {
 			return false;
 		}
-	}
-	else
-	{
+	} else {
 		// Already invalid
 		return false;
 	}
 }
 
-bool UNetAddr::DemoteTo4()
-{
-	if (_family == AF_INET)
-	{
+bool UNetAddr::DemoteTo4() {
+	if (_family == AF_INET) {
 		// Already IPv4
 		return true;
-	}
-	else if (_family == AF_INET6)
-	{
-		if (_ip.v6[0] != 0 || _ip.v6_words[4] != 0)
-		{
+	} else if (_family == AF_INET6) {
+		if (_ip.v6[0] != 0 || _ip.v6_words[4] != 0) {
 			_valid = 0;
 			return false;
-		}
-		else if (_ip.v6_words[5] == 0 && _ip.v6_words[6] == 0 &&
-				 _ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1)
-		{
+		} else if (_ip.v6_words[5] == 0 && _ip.v6_words[6] == 0 &&
+				   _ip.v6_bytes[14] == 0 && _ip.v6_bytes[15] == 1) {
 			// Loopback
 			_family = AF_INET;
 			_ip.v4 = htonl(0x7F000001);
 			return true;
-		}
-		else if (_ip.v6_words[5] == 0xFFFF)
-		{
+		} else if (_ip.v6_words[5] == 0xFFFF) {
 			// Embedded IPv4 address
 			_family = AF_INET;
 			_ip.v4 = htonl( ((u32)_ip.v6_bytes[12] << 24) |
@@ -826,16 +732,13 @@ bool UNetAddr::DemoteTo4()
 							((u32)_ip.v6_bytes[14] << 8) |
 							((u32)_ip.v6_bytes[15]) );
 			return true;
-		}
-		else
-		{
+		} else {
 			_valid = 0;
 			return false;
 		}
-	}
-	else
-	{
+	} else {
 		// Already invalid
 		return false;
 	}
 }
+
