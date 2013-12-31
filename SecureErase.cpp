@@ -29,6 +29,11 @@
 #include "SecureErase.hpp"
 using namespace cat;
 
+#if defined(CAT_OS_WINDOWS) && !defined(CAT_OS_WINDOWS_CE) && !defined(CAT_COMPILER_MINGW)
+# include <windows.h> // SecureZeroMemory
+# define CAT_HAS_WINZERO
+#endif
+
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
 typedef u64 vec_block __attribute__((ext_vector_type(4)));
 #endif
@@ -38,6 +43,13 @@ extern "C" {
 #endif
 
 void cat_secure_erase(volatile void *data, int len) {
+
+#ifdef CAT_HAS_WINZERO
+
+	SecureZeroMemory((void *)data, len);
+
+#else // CAT_HAS_WINZERO
+
 	// Calculate number of 64-bit words to erase, usually a multiple of 32 bytes
 	int words = len >> 3;
 
@@ -104,6 +116,9 @@ void cat_secure_erase(volatile void *data, int len) {
 	default:
 		break;
 	}
+
+#endif // CAT_HAS_WINZERO
+
 }
 
 #ifdef __cplusplus
