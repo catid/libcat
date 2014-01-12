@@ -302,7 +302,7 @@ CAT_INLINE u32 BSR64(u64 x)
 #define CAT_NO_INTRINSIC_BSR64
 
 	// Adapted from the Stanford Bit Twiddling Hacks collection
-    register u32 shift, r;
+    u32 shift, r;
 
     r = (x > 0xFFFFFFFF) << 5; x >>= r;
     shift = (x > 0xFFFF) << 4; x >>= shift; r |= shift;
