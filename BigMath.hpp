@@ -117,7 +117,7 @@ namespace cat {
 
 # define CAT_MUL64(r_hi, r_lo, x, y)		\
 	{										\
-		register u64 __x = x, __y = y;		\
+		u64 __x = x, __y = y;				\
 		r_lo = __x * __y;					\
 		CAT_ASM_BEGIN						\
 			"mulhdu %0, %1, %2"				\
@@ -133,14 +133,14 @@ namespace cat {
 
 # define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)															\
 	{																								\
-		register u128 __r = ( ((u128)(r_hi) << 64) | (r_lo) ) + ( ((u128)(x_hi) << 64) | (x_lo) );	\
+		u128 __r = ( ((u128)(r_hi) << 64) | (r_lo) ) + ( ((u128)(x_hi) << 64) | (x_lo) );			\
 		r_hi = (u64)(__r >> 64);																	\
 		r_lo = (u64)__r;																			\
 	}
 
 # define CAT_MUL64(r_hi, r_lo, x, y)			\
 	{											\
-		register u128 __r = (u128)(x) * (y);	\
+		u128 __r = (u128)(x) * (y);				\
 		r_hi = (u64)(__r >> 64);				\
 		r_lo = (u64)__r;						\
 	}
@@ -152,7 +152,7 @@ namespace cat {
 
 # define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)	\
 	{										\
-		register u64 __x_lo = x_lo;			\
+		u64 __x_lo = x_lo;					\
 		r_lo += __x_lo;						\
 		r_hi += x_hi;						\
 		r_hi += (r_lo) < __x_lo;			\
@@ -188,7 +188,7 @@ namespace cat {
 #if !defined(CAT_ADD128)
 # define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)		\
 	{											\
-		register u64 __x_lo = x_lo;				\
+		u64 __x_lo = x_lo;						\
 		r_lo += __x_lo;							\
 		r_hi += x_hi;							\
 		r_hi += (r_lo) < __x_lo;				\
@@ -198,7 +198,7 @@ namespace cat {
 #if !defined(CAT_PADD128)
 # define CAT_PADD128(r_hi, r_lo, x)	\
 	{								\
-		register u64 __x = x;		\
+		u64 __x = x;				\
 		r_lo += __x;				\
 		r_hi += (r_lo) < __x;		\
 	}
@@ -207,9 +207,9 @@ namespace cat {
 #if !defined(CAT_PMUL64)
 # define CAT_PMUL64(r_hi, r_lo, x, y)												\
 	{																				\
-		register u64 __x = x;														\
-		register u64 __y = y;														\
-		register u64 __m = CAT_MUL32(__x, __y >> 32) + CAT_MUL32(__x >> 32, __y);	\
+		u64 __x = x;																\
+		u64 __y = y;																\
+		u64 __m = CAT_MUL32(__x, __y >> 32) + CAT_MUL32(__x >> 32, __y);			\
 		r_hi = CAT_MUL32(__x >> 32, __y >> 32);										\
 		r_lo = CAT_MUL32(__x, __y);													\
 		CAT_ADD128(r_hi, r_lo, __m >> 32, __m << 32);								\
@@ -219,10 +219,10 @@ namespace cat {
 #if !defined(CAT_MUL64)
 # define CAT_MUL64(r_hi, r_lo, x, y)					\
 	{													\
-		register u64 __x = x;							\
-		register u64 __y = y;							\
-		register u64 __m = CAT_MUL32(__x, __y >> 32);	\
-		register u64 __n = CAT_MUL32(__x >> 32, __y);	\
+		u64 __x = x;									\
+		u64 __y = y;									\
+		u64 __m = CAT_MUL32(__x, __y >> 32);			\
+		u64 __n = CAT_MUL32(__x >> 32, __y);			\
 		r_hi = CAT_MUL32(__x >> 32, __y >> 32);			\
 		r_lo = CAT_MUL32(__x, __y);						\
 		CAT_ADD128(r_hi, r_lo, __m >> 32, __m << 32);	\
