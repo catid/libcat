@@ -26,7 +26,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "memxor.hpp"
+#include "MemXOR.hpp"
 using namespace cat;
 
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
