@@ -26,7 +26,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <cat/parse/Base64.hpp>
+#include "Base64.hpp"
 using namespace std;
 using namespace cat;
 
@@ -145,7 +145,7 @@ int cat::WriteBase64(const void *buffer, int bytes, ostream &output)
 
 //// Conversion from Base64
 
-static const u8 DC = 0;
+#define DC 0
 
 static const u8 FROM_BASE64[256] = {
 	DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, // 0-15
@@ -166,6 +166,7 @@ static const u8 FROM_BASE64[256] = {
 	DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC
 };
 
+#undef DC
 
 int cat::GetBinaryLengthFromBase64Length(const char *encoded_buffer, int bytes)
 {
@@ -290,3 +291,4 @@ int cat::ReadBase64(const char *encoded_buffer, int encoded_bytes, std::ostream 
 
 	return (encoded_bytes * 3) / 4;
 }
+
