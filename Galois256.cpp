@@ -98,33 +98,35 @@ u8 * CAT_RESTRICT cat::GF256_DIV_TABLE = 0;
 
 // Unpack 256x256 multiplication tables
 void cat::GF256Init() {
-	// If not initialized yet,
-	if (!GF_MUL_TABLE) {
-		// Allocate table memory 65KB
-		GF256_MUL_TABLE = (u8 *)malloc(256 * 256);
-		GF256_DIV_TABLE = (u8 *)malloc(256 * 256);
+	// If initialized already,
+	if (GF256_MUL_TABLE) {
+		return;
+	}
 
-		// For each subtable,
-		u8 *ptr = GF256_MUL_TABLE;
-		for (int ii = 0; ii < 256; ++ii) {
-			const u8 log_ii = GF256_LOG_TABLE[ii];
+	// Allocate table memory 65KB
+	GF256_MUL_TABLE = (u8 *)malloc(256 * 256);
+	GF256_DIV_TABLE = (u8 *)malloc(256 * 256);
 
-			// Calculate ii * jj
-			for (int jj = 0; jj < 256; ++jj) {
-				*ptr++ = GF256_EXP_TABLE[log_ii + GF256_LOG_TABLE[jj]];
-			}
+	// For each subtable,
+	u8 *ptr = GF256_MUL_TABLE;
+	for (int ii = 0; ii < 256; ++ii) {
+		const u8 log_ii = GF256_LOG_TABLE[ii];
+
+		// Calculate ii * jj
+		for (int jj = 0; jj < 256; ++jj) {
+			*ptr++ = GF256_EXP_TABLE[log_ii + GF256_LOG_TABLE[jj]];
 		}
+	}
 
-		// For each subtable,
-		ptr = GF256_DIV_TABLE;
-		for (int ii = 0; ii < 256; ++ii) {
-			const u8 log_ii = 255 - GF256_LOG_TABLE[ii];
+	// For each subtable,
+	ptr = GF256_DIV_TABLE;
+	for (int ii = 0; ii < 256; ++ii) {
+		const u8 log_ii = 255 - GF256_LOG_TABLE[ii];
 
-			// Calculate ii * jj
-			*ptr++ = 0;
-			for (int jj = 1; jj < 256; ++jj) {
-				*ptr++ = GF256_EXP_TABLE[GF256_LOG_TABLE[jj] + log_ii];
-			}
+		// Calculate ii * jj
+		*ptr++ = 0;
+		for (int jj = 1; jj < 256; ++jj) {
+			*ptr++ = GF256_EXP_TABLE[GF256_LOG_TABLE[jj] + log_ii];
 		}
 	}
 }
