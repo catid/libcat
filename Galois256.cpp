@@ -105,35 +105,35 @@ void cat::GF256Init() {
 
 	// Allocate table memory 65KB x 2
 	GF256_MUL_TABLE = (u8 *)malloc(256 * 256 * 2);
+	GF256_DIV_TABLE = GF256_MUL_TABLE + 256 * 256;
+	u8 *m = GF256_MUL_TABLE, *d = GF256_DIV_TABLE;
 
-	// For each subtable,
-	u8 *ptr = GF256_MUL_TABLE;
-	for (int jj = 0; jj < 256; ++jj) {
-		ptr[jj] = 0;
-	}
-	ptr += 256;
-	for (int ii = 1; ii < 256; ++ii) {
-		const u8 log_ii = GF256_LOG_TABLE[ii];
-
-		// Calculate ii * jj
-		ptr[0] = 0;
-		for (int jj = 1; jj < 256; ++jj) {
-			ptr[jj] = GF256_EXP_TABLE[log_ii + GF256_LOG_TABLE[jj]];
-		}
-		ptr += 256;
+	// Unroll y = 0 subtable
+	for (int x = 0; x < 256; ++x) {
+		m[x] = d[x] = 0;
 	}
 
-	// For each subtable,
-	GF256_DIV_TABLE = ptr;
-	for (int ii = 0; ii < 256; ++ii) {
-		const u8 log_ii = 255 - GF256_LOG_TABLE[ii];
+	// For each other y value,
+	for (int y = 1; y < 256; ++y) {
+		// Calculate log(y) for mult and 255 - log(y) for div
+		const u8 log_y = GF256_LOG_TABLE[y];
+		const u8 log_yn = 255 - log_y;
 
-		// Calculate ii / jj
-		ptr[0] = 0;
-		for (int jj = 1; jj < 256; ++jj) {
-			ptr[jj] = GF256_EXP_TABLE[log_ii + GF256_LOG_TABLE[jj]];
+		// Next subtable
+		m += 256;
+		d += 256;
+
+		// Unroll x = 0
+		m[0] = 0;
+		d[0] = 0;
+
+		// Calculate x * y, x / y
+		for (int x = 1; x < 256; ++x) {
+			int log_x = GF256_LOG_TABLE[x];
+
+			m[x] = GF256_EXP_TABLE[log_x + log_y];
+			d[x] = GF256_EXP_TABLE[log_x + log_yn];
 		}
-		ptr += 256;
 	}
 }
 

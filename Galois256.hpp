@@ -73,11 +73,13 @@ extern u8 * CAT_RESTRICT GF256_DIV_TABLE;
 void GF256Init();
 
 // return x * y in GF(256)
+// For repeated multiplication by a constant, it is faster to put the constant in y.
 static CAT_INLINE u8 GF256Multiply(u8 x, u8 y) {
-	return GF256_MUL_TABLE[((u32)x << 8) + y];
+	return GF256_MUL_TABLE[((u32)y << 8) + x];
 }
 
 // return x / y in GF(256)
+// Memory-access optimized for constant divisors in y.
 static CAT_INLINE u8 GF256Divide(u8 x, u8 y) {
 	return GF256_DIV_TABLE[((u32)y << 8) + x];
 }
