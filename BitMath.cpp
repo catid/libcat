@@ -35,3 +35,15 @@ const int cat::MultiplyDeBruijnBitPosition2[32] =
 	0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 
 	31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
 };
+
+// From http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetTable
+const u8 cat::BIT_COUNT_TABLE[256] = {
+#   define B2(n) n,     n+1,     n+1,     n+2
+#   define B4(n) B2(n), B2(n+1), B2(n+1), B2(n+2)
+#   define B6(n) B4(n), B4(n+1), B4(n+1), B4(n+2)
+    B6(0), B6(1), B6(1), B6(2)
+};
+#undef B2
+#undef B4
+#undef B6
+

@@ -64,6 +64,7 @@ namespace cat {
 // Precomputed tables
 extern const u16 GF256_LOG_TABLE[256];
 extern const u8 GF256_EXP_TABLE[512*2+1];
+extern const u8 GF256_INV_TABLE[256];
 
 // Generated tables
 extern u8 * CAT_RESTRICT GF256_MUL_TABLE;
