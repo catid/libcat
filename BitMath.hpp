@@ -46,7 +46,7 @@ template<typename T> CAT_INLINE T BitCount(T v)
 }
 
 // Lookup table for number of 1-bits in a byte
-const u8 BIT_COUNT_TABLE[256];
+extern const u8 BIT_COUNT_TABLE[256];
 
 /*
 	Reconstruct a 32-bit or 64-bit counter that increments by one each time,
