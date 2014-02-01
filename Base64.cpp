@@ -26,7 +26,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <cat/parse/Base64.hpp>
+#include "Base64.hpp"
 using namespace std;
 using namespace cat;
 
@@ -145,7 +145,7 @@ int cat::WriteBase64(const void *buffer, int bytes, ostream &output)
 
 //// Conversion from Base64
 
-static const u8 DC = 0;
+#define DC 0
 
 static const u8 FROM_BASE64[256] = {
 	DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, // 0-15
@@ -166,22 +166,38 @@ static const u8 FROM_BASE64[256] = {
 	DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC, DC
 };
 
+#undef DC
 
 int cat::GetBinaryLengthFromBase64Length(const char *encoded_buffer, int bytes)
 {
 	if (bytes <= 0) return 0;
 
-	while (bytes >= 1 && encoded_buffer[bytes-1] == '=')
+	// Skip characters from end until one is a valid BASE64 character
+	while (bytes >= 1) {
+		unsigned char ch = encoded_buffer[bytes - 1];
+
+		if (ch == '0' || FROM_BASE64(ch) != 0) {
+			break;
+		}
+
 		--bytes;
+	}
 
 	return (bytes * 3) / 4;
 }
 
 int cat::ReadBase64(const char *encoded_buffer, int encoded_bytes, void *decoded_buffer, int decoded_bytes)
 {
-	// Skip '=' characters at the end
-	while (encoded_bytes >= 1 && encoded_buffer[encoded_bytes-1] == '=')
+	// Skip characters from end until one is a valid BASE64 character
+	while (encoded_bytes >= 1) {
+		unsigned char ch = encoded_buffer[encoded_bytes - 1];
+
+		if (ch == '0' || FROM_BASE64(ch) != 0) {
+			break;
+		}
+
 		--encoded_bytes;
+	}
 
 	if (encoded_bytes <= 0 || decoded_bytes <= 0 ||
 		decoded_bytes < (encoded_bytes * 3) / 4)
@@ -275,3 +291,4 @@ int cat::ReadBase64(const char *encoded_buffer, int encoded_bytes, std::ostream 
 
 	return (encoded_bytes * 3) / 4;
 }
+

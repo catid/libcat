@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2009-2011 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2012 Christopher A. Taylor.  All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -9,8 +9,8 @@
 	* Redistributions in binary form must reproduce the above copyright notice,
 	  this list of conditions and the following disclaimer in the documentation
 	  and/or other materials provided with the distribution.
-	* Neither the name of LibCat nor the names of its contributors may be used
-	  to endorse or promote products derived from this software without
+	* Neither the name of WirehairFEC nor the names of its contributors may be
+	  used to endorse or promote products derived from this software without
 	  specific prior written permission.
 
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -26,24 +26,24 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "BitMath.hpp"
-using namespace cat;
+#ifndef CAT_MEMXOR_HPP
+#define CAT_MEMXOR_HPP
 
-// Used by BSF32 if BitScanForward opcode is not available
-const int cat::MultiplyDeBruijnBitPosition2[32] = 
-{
-	0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 
-	31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
-};
+#include "Platform.hpp"
 
-// From http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetTable
-const u8 cat::BIT_COUNT_TABLE[256] = {
-#   define B2(n) n,     n+1,     n+1,     n+2
-#   define B4(n) B2(n), B2(n+1), B2(n+1), B2(n+2)
-#   define B6(n) B4(n), B4(n+1), B4(n+1), B4(n+2)
-    B6(0), B6(1), B6(1), B6(2)
-};
-#undef B2
-#undef B4
-#undef B6
+namespace cat {
 
+
+// In-place XOR of voutput buffer by vinput buffer
+void memxor(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT vinput, int bytes);
+
+// XOR of two buffers stored in voutput buffer
+void memxor_set(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
+
+// XOR of two buffers XORed into voutput buffer
+void memxor_add(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
+
+
+} // namespace cat
+
+#endif // CAT_MEMXOR_HPP

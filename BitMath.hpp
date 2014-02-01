@@ -45,6 +45,9 @@ template<typename T> CAT_INLINE T BitCount(T v)
 	return (T)(v * ((T)~(T)0/255)) >> ((sizeof(v) - 1) * 8);
 }
 
+// Lookup table for number of 1-bits in a byte
+extern const u8 BIT_COUNT_TABLE[256];
+
 /*
 	Reconstruct a 32-bit or 64-bit counter that increments by one each time,
 	given a truncated sample of its low bits, and the last accepted value of the
@@ -302,7 +305,7 @@ CAT_INLINE u32 BSR64(u64 x)
 #define CAT_NO_INTRINSIC_BSR64
 
 	// Adapted from the Stanford Bit Twiddling Hacks collection
-    register u32 shift, r;
+    u32 shift, r;
 
     r = (x > 0xFFFFFFFF) << 5; x >>= r;
     shift = (x > 0xFFFF) << 4; x >>= shift; r |= shift;
