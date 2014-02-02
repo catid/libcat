@@ -26,24 +26,19 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef CAT_MEMXOR_HPP
-#define CAT_MEMXOR_HPP
+#ifndef CAT_MEMSWAP_HPP
+#define CAT_MEMSWAP_HPP
 
 #include "Platform.hpp"
 
 namespace cat {
 
 
-// In-place XOR of voutput buffer by vinput buffer
-void memxor(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT vinput, int bytes);
-
-// XOR of two buffers stored in voutput buffer
-void memxor_set(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
-
-// XOR of two buffers XORed into voutput buffer
-void memxor_add(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
+// In-place swap of two buffers
+void memswap(void * CAT_RESTRICT vx, void * CAT_RESTRICT vy, int bytes);
 
 
 } // namespace cat
 
-#endif // CAT_MEMXOR_HPP
+#endif // CAT_MEMSWAP_HPP
+

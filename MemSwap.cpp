@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2012 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2014 Christopher A. Taylor.  All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -26,24 +26,40 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef CAT_MEMXOR_HPP
-#define CAT_MEMXOR_HPP
+#include "MemSwap.hpp"
+using namespace cat;
 
-#include "Platform.hpp"
+void cat::memswap(void * CAT_RESTRICT vx, void * CAT_RESTRICT vy, int bytes)
+{
+	// Primary engine
+	u64 * CAT_RESTRICT x64 = reinterpret_cast<u64 *>( vx );
+	u64 * CAT_RESTRICT y64 = reinterpret_cast<u64 *>( vy );
 
-namespace cat {
+	// Handle remaining multiples of 8 bytes
+	while (bytes >= 8) {
+		u64 temp = x64[0];
+		x64[0] = y64[0];
+		y64[0] = temp;
+		bytes -= 8;
+	}
 
+	// Handle final <8 bytes
+	u8 * CAT_RESTRICT x = reinterpret_cast<u8 *>( x64 );
+	u8 * CAT_RESTRICT y = reinterpret_cast<u8 *>( y64 );
+	u8 t, t32;
 
-// In-place XOR of voutput buffer by vinput buffer
-void memxor(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT vinput, int bytes);
+	switch (bytes) {
+	case 7: t = x[6]; x[6] = y[6]; y[6] = t;
+	case 6:	t = x[5]; x[5] = y[5]; y[5] = t;
+	case 5:	t = x[4]; x[4] = y[4]; y[4] = t;
+	case 4:	t32 = *(u32*)x; *(u32*)x = *(u32*)y; *(u32*)y = t32;
+		break;
+	case 3:	t = x[2]; x[2] = y[2]; y[2] = t;
+	case 2:	t = x[1]; x[1] = y[1]; y[1] = t;
+	case 1:	t = x[0]; x[0] = y[0]; y[0] = t;
+	case 0:
+	default:
+		break;
+	}
+}
 
-// XOR of two buffers stored in voutput buffer
-void memxor_set(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
-
-// XOR of two buffers XORed into voutput buffer
-void memxor_add(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, const void * CAT_RESTRICT vb, int bytes);
-
-
-} // namespace cat
-
-#endif // CAT_MEMXOR_HPP
