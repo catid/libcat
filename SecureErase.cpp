@@ -30,7 +30,7 @@
 using namespace cat;
 
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
-typedef u64 vec_block __attribute__((ext_vector_type(4)));
+typedef u64 vec_block CAT_VECTOR_SIZE(u64, 4);
 #endif
 
 #ifdef __cplusplus
@@ -62,8 +62,9 @@ void cat_secure_erase(volatile void *data, int len) {
 	} else {
 		// Usual case:
 		volatile vec_block *block = (volatile vec_block *)data;
+		const vec_block zero = { 0 };
 		while (words >= 4) {
-			*block++ = 0;
+			*block++ = zero;
 			words -= 4;
 		}
 		word = (volatile u64 *)block;

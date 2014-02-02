@@ -818,8 +818,12 @@ private: \
 # define __has_extension(x) 0
 #endif
 
-#if (defined __GNUC__ && __GNUC_MINOR__ >= 7) || (defined __clang__ && __has_extension(attribute_ext_vector_type))
-#define CAT_HAS_VECTOR_EXTENSIONS
+#if defined(__GNUC__) && __GNUC_MINOR__ >= 7
+# define CAT_HAS_VECTOR_EXTENSIONS
+# define CAT_VECTOR_SIZE(T, elements) __attribute__((vector_size(sizeof(T) * elements)))
+#elif defined(__clang__) && __has_extension(attribute_ext_vector_type)
+# define CAT_HAS_VECTOR_EXTENSIONS
+# define CAT_VECTOR_SIZE(T, elements) __attribute__((ext_vector_type(elements)))
 #endif
 
 #endif // CAT_PLATFORM_HPP

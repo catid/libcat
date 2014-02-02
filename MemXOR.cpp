@@ -30,7 +30,7 @@
 using namespace cat;
 
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
-typedef u64 vec_block __attribute__((ext_vector_type(16)));
+typedef u64 vec_block CAT_VECTOR_SIZE(u64, 16);
 #endif
 
 void cat::memxor(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT vinput, int bytes)
