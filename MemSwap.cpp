@@ -41,6 +41,8 @@ void cat::memswap(void * CAT_RESTRICT vx, void * CAT_RESTRICT vy, int bytes)
 		x64[0] = y64[0];
 		y64[0] = temp;
 		bytes -= 8;
+		++x64;
+		++y64;
 	}
 
 	// Handle final <8 bytes
