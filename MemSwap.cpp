@@ -46,7 +46,8 @@ void cat::memswap(void * CAT_RESTRICT vx, void * CAT_RESTRICT vy, int bytes)
 	// Handle final <8 bytes
 	u8 * CAT_RESTRICT x = reinterpret_cast<u8 *>( x64 );
 	u8 * CAT_RESTRICT y = reinterpret_cast<u8 *>( y64 );
-	u8 t, t32;
+	u8 t;
+	u32 t32;
 
 	switch (bytes) {
 	case 7: t = x[6]; x[6] = y[6]; y[6] = t;
