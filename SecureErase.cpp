@@ -42,8 +42,8 @@ void cat_secure_erase(volatile void *data, int len) {
 	int words = len >> 3;
 
 	// Bulk erase blocks of 32 bytes at a time
-#ifdef CAT_HAS_VECTOR_EXTENSIONS
 	volatile u64 *word;
+#ifdef CAT_HAS_VECTOR_EXTENSIONS
 #ifdef CAT_WORD_64
 	if (*(u64*)&data & 15) {
 #else
