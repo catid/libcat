@@ -64,6 +64,7 @@ bool cat::SecureEqual(const void *vA, const void *vB, int bytes)
     case 1: fail |= A[0] ^ B[0];
     }
 
-    return fail == 0;
+	u32 z = ((u64)fail >> 32) | (u32)fail;
+    return z == 0;
 }
 
