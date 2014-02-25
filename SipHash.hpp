@@ -47,7 +47,7 @@
 namespace cat {
 
 
-u64 siphash24(const char key[16], const void *vm, int len, const u64 ad = 0);
+u64 siphash24(const char key[16], const void *vm, int len, const u64 ad1 = 0, const u64 ad2 = 0);
 
 
 } // namespace cat
