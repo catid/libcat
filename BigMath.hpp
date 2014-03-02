@@ -47,9 +47,27 @@ namespace cat {
 	};
 #endif
 
+// r = x
+CAT_INLINE void u128_set(u128 &r, const u64 x);
+
+// x + y
+CAT_INLINE u128 u128_sum(const u64 x, const u64 y);
+
+// x - y
+CAT_INLINE u128 u128_diff(const u64 x, const u64 y);
+
 // r += x
 CAT_INLINE void u128_add(u128 &r, const u128 x);
 CAT_INLINE void u128_add(u128 &r, const u64 x);
+
+// r = u128_high(r) + x
+// Negative r values are not sign-extended
+CAT_INLINE void u128_add_carry(u128 &r, const u64 x);
+
+// r = (r >> 64) + x
+// Note that the difference here is that r is signed,
+// so negative values are sign-extended
+CAT_INLINE void u128_add_borrow(u128 &r, const u64 x);
 
 // r -= x
 CAT_INLINE void u128_sub(u128 &r, const u128 x);
@@ -59,13 +77,13 @@ CAT_INLINE void u128_sub(u128 &r, const u64 x);
 CAT_INLINE void u128_lshift(u128 &r, int shift);
 
 // x * y
-CAT_INLINE u128 u128_mul(const u64 x, const u64 y);
+CAT_INLINE u128 u128_prod(const u64 x, const u64 y);
 
 // x * y + z
-CAT_INLINE u128 u128_mul_add(const u64 x, const u64 y, const u64 z);
+CAT_INLINE u128 u128_prod_sum(const u64 x, const u64 y, const u64 z);
 
 // x * y assuming MSB(x) = MSB(y) = 0
-CAT_INLINE u128 u128_mul_63(const u64 x, const u64 y);
+CAT_INLINE u128 u128_prod_63(const u64 x, const u64 y);
 
 // get high/low halves
 CAT_INLINE u64 u128_high(const u128 x);

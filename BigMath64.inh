@@ -167,6 +167,12 @@
 
 //// 128-bit API
 
+CAT_INLINE void u128_set(u128 &r, const u64 x)
+{
+	r.lo = x;
+	r.hi = 0;
+}
+
 CAT_INLINE void u128_add(u128 &r, const u128 x)
 {
 	CAT_ADD128(r.hi, r.lo, x.hi, x.lo);
