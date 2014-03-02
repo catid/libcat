@@ -1,0 +1,50 @@
+CAT_INLINE void u128_add(u128 &r, const u128 x)
+{
+	r += x;
+}
+
+CAT_INLINE void u128_add(u128 &r, const u64 x)
+{
+	r += x;
+}
+
+CAT_INLINE void u128_sub(u128 &r, const u128 x)
+{
+	r -= x;
+}
+
+CAT_INLINE void u128_sub(u128 &r, const u64 x)
+{
+	r -= x;
+}
+
+CAT_INLINE void u128_lshift(u128 &r, int shift)
+{
+	r <<= shift;
+}
+
+CAT_INLINE u128 u128_mul(const u64 x, const u64 y)
+{
+	return (u128)x * y;
+}
+
+CAT_INLINE u128 u128_mul_add(const u64 x, const u64 y, const u64 z)
+{
+	return (u128)x * y + z;
+}
+
+CAT_INLINE u128 u128_mul_63(const u64 x, const u64 y)
+{
+	return (u128)x * y;
+}
+
+CAT_INLINE u64 u128_high(const u128 x)
+{
+	return (u64)(x >> 64);
+}
+
+CAT_INLINE u64 u128_low(const u128 x)
+{
+	return (u64)x;
+}
+
