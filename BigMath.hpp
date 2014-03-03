@@ -56,10 +56,12 @@ CAT_INLINE void u128_set(u128 &r, const u64 low, const u64 high);
 
 // x + y
 CAT_INLINE u128 u128_sum(const u64 x, const u64 y);
+CAT_INLINE u128 u128_sum(const u128 x, const u64 y);
 CAT_INLINE u128 u128_sum(const u128 x, const u128 y);
 
 // x - y
 CAT_INLINE u128 u128_diff(const u64 x, const u64 y);
+CAT_INLINE u128 u128_diff(const u128 x, const u64 y);
 CAT_INLINE u128 u128_diff(const u128 x, const u128 y);
 
 // r += x

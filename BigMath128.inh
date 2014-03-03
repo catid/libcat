@@ -13,6 +13,11 @@ CAT_INLINE u128 u128_sum(const u64 x, const u64 y)
 	return (u128)x + y;
 }
 
+CAT_INLINE u128 u128_sum(const u128 x, const u64 y)
+{
+	return x + y;
+}
+
 CAT_INLINE u128 u128_sum(const u128 x, const u128 y)
 {
 	return x + y;
@@ -21,6 +26,11 @@ CAT_INLINE u128 u128_sum(const u128 x, const u128 y)
 CAT_INLINE u128 u128_diff(const u64 x, const u64 y)
 {
 	return (s128)x - y;
+}
+
+CAT_INLINE u128 u128_sum(const u128 x, const u64 y)
+{
+	return x - y;
 }
 
 CAT_INLINE u128 u128_diff(const u128 x, const u128 y)
