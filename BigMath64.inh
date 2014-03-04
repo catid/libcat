@@ -76,22 +76,14 @@
 
 #endif
 
-
-#else // 32-bit versions:
+#endif // end if 64-bit version
 
 
 #if defined(CAT_COMPILER_MSVC) // MSVC-32:
-
 # define CAT_MUL64(A, B) __emulu((u32)(A), (u32)(B)) /* slightly faster in ICC */
-
 #else
-
 # define CAT_MUL64(A, B) ( (u64)( (u32)(A) ) * (u32)(B) )
-
 #endif
-
-
-#endif // 32/64-bit versions
 
 
 //// Fallback versions based on u64 ////
@@ -118,19 +110,21 @@
 #if !defined(CAT_SUB128)
 # define CAT_SUB128(r_hi, r_lo, x_hi, x_lo)		\
 	{											\
-		u64 __x_lo = x_lo;						\
+		const u64 __r_lo = r_lo;				\
+		const u64 __x_lo = x_lo;				\
 		r_lo -= __x_lo;							\
+		r_hi -= __r_lo < __x_lo;				\
 		r_hi -= x_hi;							\
-		r_hi -= (r_lo) < __x_lo;				\
 	}
 #endif
 
 #if !defined(CAT_PSUB128)
 # define CAT_PSUB128(r_hi, r_lo, x)	\
 	{								\
+		u64 __r = r_lo;				\
 		u64 __x = x;				\
 		r_lo -= __x;				\
-		r_hi -= (r_lo) < __x;		\
+		r_hi -= __r < __x;			\
 	}
 #endif
 
@@ -254,7 +248,7 @@ CAT_INLINE u128 u128_diff(const u128 x, const u128 y)
 	r.hi = x.hi;
 	r.lo = x.lo;
 
-	CAT_PSUB128(r.hi, r.lo, y.hi, y.lo);
+	CAT_SUB128(r.hi, r.lo, y.hi, y.lo);
 
 	return r;
 }
@@ -371,7 +365,7 @@ CAT_INLINE u128 u128_prod_63_sum(const u64 x, const u64 y, const u64 z)
 	CAT_MUL128(r.hi, r.lo, x, y);
 	CAT_PADD128(r.hi, r.lo, z);
 #else
-	u64 prod, sum;
+	u64 prod;
 
 	prod = CAT_MUL64(x, y) + (u32)z;
 
@@ -395,7 +389,7 @@ CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z)
 
 	const u64 old = x << shift;
 
-	r.lo = old + x.lo;
+	r.lo = old + z;
 	r.hi += (r.lo < old);
 
 	return r;
