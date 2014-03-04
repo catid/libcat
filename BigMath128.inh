@@ -48,9 +48,29 @@ CAT_INLINE void u128_add(u128 &r, const u64 x)
 	r += x;
 }
 
+CAT_INLINE u128 u128_not(const u128 x)
+{
+	return ~x;
+}
+
 CAT_INLINE void u128_or(u128 &r, const u64 x)
 {
 	r |= x;
+}
+
+CAT_INLINE u128 u128_and(const u128 x, const u128 y)
+{
+	return x & y;
+}
+
+CAT_INLINE void u128_set_bit(u128 &r, int x)
+{
+	r |= (u128)1 << x;
+}
+
+CAT_INLINE u32 u128_get_bits(const u128 x, int offset)
+{
+	return (u32)(x >> offset);
 }
 
 CAT_INLINE void u128_carry_add(u128 &r, const u64 x)
@@ -76,6 +96,11 @@ CAT_INLINE void u128_sub(u128 &r, const u128 x)
 CAT_INLINE void u128_sub(u128 &r, const u64 x)
 {
 	r = (s128)r - x;
+}
+
+CAT_INLINE void u128_rshift(u128 &r, int shift)
+{
+	r >>= shift;
 }
 
 CAT_INLINE void u128_lshift(u128 &r, int shift)

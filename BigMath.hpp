@@ -43,7 +43,7 @@ namespace cat {
 
 #ifndef CAT_HAS_U128
 	struct u128 {
-		u64 lo, hi;
+		u64 i[2];
 	};
 #endif
 
@@ -75,8 +75,20 @@ CAT_INLINE u128 u128_neg(const u128 x);
 CAT_INLINE void u128_sub(u128 &r, const u128 x);
 CAT_INLINE void u128_sub(u128 &r, const u64 x);
 
+// ~x
+CAT_INLINE u128 u128_not(const u128 x);
+
 // r |= x
 CAT_INLINE void u128_or(u128 &r, const u64 x);
+
+// x & y
+CAT_INLINE u128 u128_and(const u128 x, const u128 y);
+
+// Set bit x: 0..127
+CAT_INLINE void u128_set_bit(u128 &r, int x);
+
+// Get 32 bits from offset: 0..127
+CAT_INLINE u32 u128_get_bits(const u128 x, int offset);
 
 // r = u128_high(r) + x
 // Negative r values are not sign-extended
@@ -98,6 +110,10 @@ CAT_INLINE void u128_borrow_add_sub(u128 &r, const u64 x, const u64 y)
 	u128_borrow_add(r, x);
 	u128_sub(r, y);
 }
+
+// r >>= shift
+// Precondition: 0 < shift < 64
+CAT_INLINE void u128_rshift(u128 &r, int shift);
 
 // r <<= shift
 // Precondition: 0 < shift < 64
