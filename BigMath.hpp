@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2012 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2012-2014 Christopher A. Taylor.  All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -100,16 +100,18 @@ CAT_INLINE void u128_borrow_add_sub(u128 &r, const u64 x, const u64 y)
 }
 
 // r <<= shift
+// Precondition: 0 < shift < 64
 CAT_INLINE void u128_lshift(u128 &r, int shift);
+
+// (x << shift) + z
+// Precondition: 0 < shift < 64
+CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z);
 
 // x * y
 CAT_INLINE u128 u128_prod(const u64 x, const u64 y);
 
 // x * y + z
 CAT_INLINE u128 u128_prod_sum(const u64 x, const u64 y, const u64 z);
-
-// (x << shift) + z
-CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z);
 
 // x * y assuming MSB(x) = MSB(y) = 0
 CAT_INLINE u128 u128_prod_63(const u64 x, const u64 y);
@@ -132,10 +134,8 @@ CAT_INLINE void u128_clear_msb(u128 &r);
 
 #if defined(CAT_HAS_U128)
 # include "BigMath128.inh"
-#elif defined(CAT_WORD_64)
-# include "BigMath64.inh"
 #else
-# include "BigMath32.inh"
+# include "BigMath64.inh"
 #endif
 
 

@@ -2,5 +2,240 @@
 
 # define CAT_MUL32(A, B) __emulu((u32)(A), (u32)(B)) /* slightly faster in ICC */
 
+#else
+
+# define CAT_MUL32(A, B) ( (u64)( (u32)(A) ) * (u32)(B) )
+
 #endif
+
+
+CAT_INLINE void u128_set(u128 &r, const u64 x)
+{
+	r.lo = x;
+	r.hi = 0;
+}
+
+CAT_INLINE void u128_set(u128 &r, const u64 low, const u64 high)
+{
+	r.lo = low;
+	r.hi = high;
+}
+
+CAT_INLINE u128 u128_sum(const u64 x, const u64 y)
+{
+	u128 r;
+
+	r.lo = x + y;
+	r.hi = r.lo < x;
+
+	return r;
+}
+
+CAT_INLINE u128 u128_sum(const u128 x, const u64 y)
+{
+	u128 r;
+
+	r.lo = x.lo + y;
+	r.hi = x.hi + (r.lo < x.lo);
+
+	return r;
+}
+
+CAT_INLINE u128 u128_sum(const u128 x, const u128 y)
+{
+	u128 r;
+
+	r.lo = x.lo + y.lo;
+	r.hi = x.hi + y.hi + (r.lo < x.lo);
+
+	return r;
+}
+
+CAT_INLINE u128 u128_diff(const u64 x, const u64 y)
+{
+	u128 r;
+
+	r.lo = x - y;
+	r.hi = x < y;
+
+	return r;
+}
+
+CAT_INLINE u128 u128_diff(const u128 x, const u64 y)
+{
+	u128 r;
+
+	r.lo = x.lo - y;
+	r.hi = x.hi - (x < y);
+
+	return r;
+}
+
+CAT_INLINE u128 u128_diff(const u128 x, const u128 y)
+{
+	u128 r;
+
+	r.lo = x.lo - y.lo;
+	r.hi = x.hi - y.hi - (x.lo < y.lo);
+
+	return r;
+}
+
+CAT_INLINE void u128_add(u128 &r, const u128 x)
+{
+	const u64 old = r.lo;
+
+	r.lo += x.lo;
+	r.hi += x.hi + (r.lo < old);
+}
+
+CAT_INLINE void u128_add(u128 &r, const u64 x)
+{
+	const u64 old = r.lo;
+
+	r.lo += x.lo;
+	r.hi += (r.lo < old);
+}
+
+CAT_INLINE void u128_or(u128 &r, const u64 x)
+{
+	r.lo |= x;
+}
+
+CAT_INLINE void u128_carry_add(u128 &r, const u64 x)
+{
+	const u64 old = r.hi;
+
+	r.lo = r.hi + x;
+	r.hi = r.lo < old;
+}
+
+CAT_INLINE void u128_borrow_add(u128 &r, const u64 x)
+{
+	const u64 old = r.hi;
+
+	r.lo = r.hi + x;
+	r.hi = (r.lo < old) - (old >> 63);
+}
+
+CAT_INLINE u128 u128_neg(const u128 x)
+{
+	u128 r;
+
+	r.lo = -(s64)x.lo;
+	if (r.lo != 0) {
+		r.hi = -(s64)x.hi;
+	}
+}
+
+CAT_INLINE void u128_sub(u128 &r, const u128 x)
+{
+	const u64 old = r.lo;
+
+	r.lo -= x.lo;
+	r.hi -= (old < x.lo);
+	r.hi -= x.hi;
+}
+
+CAT_INLINE void u128_sub(u128 &r, const u64 x)
+{
+	const u64 old = r.lo;
+
+	r.lo -= x.lo;
+	r.hi -= (old < x.lo);
+}
+
+CAT_INLINE void u128_lshift(u128 &r, int shift)
+{
+	r.hi = (r.hi << shift) | (r.lo >> (64 - shift));
+	r.lo = r.lo << shift;
+}
+
+CAT_INLINE u128 u128_prod(const u64 x, const u64 y)
+{
+	u128 r;
+	u64 prod, sum;
+
+	prod = CAT_MUL32(x, y);
+
+	u32 lo = (u32)prod;
+
+	prod = CAT_MUL32(x >> 32, y) + (u32)(prod >> 32);
+	sum = (u32)(prod >> 32);
+	prod = CAT_MUL32(x, y >> 32) + (u32)prod;
+	sum += (u32)(prod >> 32);
+
+	r.lo = ((u64)( (u32)prod ) << 32) | lo;
+
+	prod = CAT_MUL32(x >> 32, y >> 32) + (u32)sum;
+
+	u32 hi = (u32)(sum >> 32) + (u32)(prod >> 32);
+
+	r.hi = ((u64)( hi ) << 32) | (u32)prod;
+
+	return (u128)x * y;
+}
+
+CAT_INLINE u128 u128_prod_sum(const u64 x, const u64 y, const u64 z)
+{
+	u128 r;
+	u64 prod, sum;
+
+	prod = CAT_MUL32(x, y) + (u32)z;
+
+	u32 lo = (u32)prod;
+
+	prod = CAT_MUL32(x >> 32, y) + (u32)(prod >> 32) + (u32)(z >> 32);
+	sum = (u32)(prod >> 32);
+	prod = CAT_MUL32(x, y >> 32) + (u32)prod;
+	sum += (u32)(prod >> 32);
+
+	r.lo = ((u64)( (u32)prod ) << 32) | lo;
+
+	prod = CAT_MUL32(x >> 32, y >> 32) + (u32)sum;
+
+	u32 hi = (u32)(sum >> 32) + (u32)(prod >> 32);
+
+	r.hi = ((u64)( hi ) << 32) | (u32)prod;
+}
+
+CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z)
+{
+	u128 r;
+
+	r.hi = x >> (64 - shift);
+
+	const u64 old = x << shift;
+
+	r.lo = old + x.lo;
+	r.hi += (r.lo < old);
+
+	return r;
+}
+
+CAT_INLINE u128 u128_prod_63(const u64 x, const u64 y)
+{
+	return (u128)x * y;
+}
+
+CAT_INLINE u64 u128_high(const u128 x)
+{
+	return (u64)(x >> 64);
+}
+
+CAT_INLINE u64 u128_low(const u128 x)
+{
+	return (u64)x;
+}
+
+CAT_INLINE bool u128_is_neg(const u128 x)
+{
+	return (s128)x < 0;
+}
+
+CAT_INLINE void u128_clear_msb(u128 &r)
+{
+	r &= 0x7fffffffffffffffULL;
+}
+
 
