@@ -387,11 +387,6 @@ CAT_INLINE u128 u128_prod_63_sum(const u64 x, const u64 y, const u64 z)
 	return r;
 }
 
-
-
-
-
-
 CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z)
 {
 	u128 r;
@@ -406,28 +401,13 @@ CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z)
 	return r;
 }
 
-CAT_INLINE u128 u128_prod_63(const u64 x, const u64 y)
-{
-	return (u128)x * y;
-}
-
-CAT_INLINE u64 u128_high(const u128 x)
-{
-	return (u64)(x >> 64);
-}
-
-CAT_INLINE u64 u128_low(const u128 x)
-{
-	return (u64)x;
-}
-
 CAT_INLINE bool u128_is_neg(const u128 x)
 {
-	return (s128)x < 0;
+	return (s64)x.hi < 0;
 }
 
 CAT_INLINE void u128_clear_msb(u128 &r)
 {
-	r &= 0x7fffffffffffffffULL;
+	r.hi &= 0x7fffffffffffffffULL;
 }
 
