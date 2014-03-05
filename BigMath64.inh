@@ -246,8 +246,10 @@ CAT_INLINE u32 u128_get_bits(const u128 x, int offset)
 {
 	if (offset >= 64) {
 		return (u32)(x.i[1] >> (offset - 64));
-	} else {
+	} else if (offset > 32) {
 		return (u32)((x.i[1] << (64 - offset)) | (x.i[0] >> offset));
+	} else {
+		return (u32)(x.i[0] >> offset);
 	}
 }
 
@@ -291,7 +293,7 @@ CAT_INLINE void u128_carry_add(u128 &r, const u64 x)
 {
 	const u64 old = r.i[1];
 
-	r.i[0] = r.i[1] + x;
+	r.i[0] = old + x;
 	r.i[1] = r.i[0] < old;
 }
 
@@ -299,7 +301,7 @@ CAT_INLINE void u128_borrow_add(u128 &r, const u64 x)
 {
 	const u64 old = r.i[1];
 
-	r.i[0] = r.i[1] + x;
+	r.i[0] = old + x;
 	r.i[1] = (r.i[0] < old) - (old >> 63);
 }
 
