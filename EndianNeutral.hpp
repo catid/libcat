@@ -63,12 +63,12 @@ namespace cat {
 	CAT_INLINE u16 getBE16(u16 n) { return CAT_BOSWAP16(n); }
 	CAT_INLINE u32 getBE32(u32 n) { return CAT_BOSWAP32(n); }
 	CAT_INLINE u64 getBE64(u64 n) { return CAT_BOSWAP64(n); }
-	CAT_INLINE s16 swapBE(s16 &n) { return n = CAT_BOSWAP16((u16)n); }
-	CAT_INLINE s32 swapBE(s32 &n) { return n = CAT_BOSWAP32((u32)n); }
-	CAT_INLINE s64 swapBE(s64 &n) { return n = CAT_BOSWAP64((u64)n); }
-	CAT_INLINE s16 getBE(s16 n) { return CAT_BOSWAP16((u16)n); }
-	CAT_INLINE s32 getBE(s32 n) { return CAT_BOSWAP32((u32)n); }
-	CAT_INLINE s64 getBE(s64 n) { return CAT_BOSWAP64((u64)n); }
+	CAT_INLINE s16 swapBE(s16 &n) { return n = (s16)CAT_BOSWAP16((u16)n); }
+	CAT_INLINE s32 swapBE(s32 &n) { return n = (s32)CAT_BOSWAP32((u32)n); }
+	CAT_INLINE s64 swapBE(s64 &n) { return n = (s64)CAT_BOSWAP64((u64)n); }
+	CAT_INLINE s16 getBE(s16 n) { return (s16)CAT_BOSWAP16((u16)n); }
+	CAT_INLINE s32 getBE(s32 n) { return (s32)CAT_BOSWAP32((u32)n); }
+	CAT_INLINE s64 getBE(s64 n) { return (s64)CAT_BOSWAP64((u64)n); }
 
 	CAT_INLINE float getBE(float n) {
 		Float32 c = n;
