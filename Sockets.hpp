@@ -39,6 +39,10 @@
 # include <netinet/in.h>
 #endif
 
+#ifdef CAT_OS_ANDROID
+#include <sys/socket.h>
+#endif
+
 /*
  * This module provides portable socket handles and network address objects
  * to simplify creation of IPv4/6 sockets across platforms.
