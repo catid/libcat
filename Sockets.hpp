@@ -192,7 +192,7 @@ struct CAT_EXPORT UNetAddr {
 	bool SetFromRawIP(const u8 *ip_binary, int bytes);
 	bool SetFromDotDecimals(int a, int b, int c, int d, Port port = 0);
 
-	bool Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6 = false) const;
+	bool Unwrap(SockAddr &addr, socklen_t &addr_len, bool PromoteToIP6 = false) const;
 };
 
 // Wrapper for IPv4 and IPv6 addresses

@@ -650,7 +650,7 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 	}
 }
 
-bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const {
+bool UNetAddr::Unwrap(SockAddr &addr, socklen_t &addr_len, bool PromoteToIP6) const {
 	if (_family == AF_INET) {
 		// If the user wants us to unwrap to an IPv6 address,
 		if (PromoteToIP6) {
