@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2009-2011 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2009-2011,2014 Christopher A. Taylor.  All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,11 @@ using namespace cat;
 
 #if defined(CAT_COMPILER_MSVC)
 #pragma comment(lib, "ws2_32.lib")
+#endif
+
+#if !defined(CAT_OS_WINDOWS)
+#include <arpa/inet.h>
+#include <errno.h>
 #endif
 
 // Fix missing definitions (mainly for MinGW):
@@ -138,11 +143,13 @@ bool UDPSocket::IgnoreUnreachable(bool ignore) {
 
 bool UDPSocket::DontFragment(bool df)
 {
+#ifdef CAT_OS_WINDOWS
 	DWORD behavior = df ? TRUE : FALSE;
 
 	if (setsockopt(GetSocket(), IPPROTO_IP, IP_DONTFRAGMENT, (const char *)&behavior, sizeof(behavior))) {
 		return false;
 	}
+#endif
 
 	return true;
 }
@@ -240,7 +247,7 @@ bool Sockets::NetBind(SocketHandle s, Port port, bool SupportIPv6) {
 		sockaddr_in *addr4 = reinterpret_cast<sockaddr_in*>( &addr );
 
 		addr4->sin_family = AF_INET;
-		addr4->sin_addr.S_un.S_addr = INADDR_ANY;
+		addr4->sin_addr.s_addr = htonl(INADDR_ANY);
 		addr4->sin_port = htons(port);
 		CAT_OBJCLR(addr4->sin_zero);
 
@@ -253,7 +260,7 @@ bool Sockets::NetBind(SocketHandle s, Port port, bool SupportIPv6) {
 
 Port Sockets::GetBoundPort(SocketHandle s) {
 	sockaddr_in6 addr;
-	int namelen = sizeof(addr);
+	socklen_t namelen = sizeof(addr);
 
 	// If socket name cannot be determined,
 	if (getsockname(s, reinterpret_cast<sockaddr*>( &addr ), &namelen)) {
@@ -337,7 +344,7 @@ bool UNetAddr::Wrap(const sockaddr_in &addr) {
 	if (addr.sin_family == AF_INET)
 	{
 		Port port = ntohs(addr.sin_port);
-		u32 ip = addr.sin_addr.S_un.S_addr;
+		u32 ip = addr.sin_addr.s_addr;
 
 		_family = AF_INET;
 		_port = port;
@@ -358,7 +365,7 @@ bool UNetAddr::Wrap(const sockaddr *addr) {
 	if (family == AF_INET) {
 		const sockaddr_in *addr4 = reinterpret_cast<const sockaddr_in*>( addr );
 		Port port = ntohs(addr4->sin_port);
-		u32 ip = addr4->sin_addr.S_un.S_addr;
+		u32 ip = addr4->sin_addr.s_addr;
 
 		_family = AF_INET;
 		_port = port;
@@ -495,6 +502,8 @@ bool UNetAddr::IsRoutable() {
 bool UNetAddr::SetFromString(const char *ip_str, Port port) {
 	// Try to convert from IPv6 address first
 	sockaddr_in6 addr6;
+
+#if defined(CAT_OS_WINDOWS)
 	int out_addr_len6 = sizeof(addr6);
 
 	if (!WSAStringToAddressA((char*)ip_str, AF_INET6, 0,
@@ -522,6 +531,30 @@ bool UNetAddr::SetFromString(const char *ip_str, Port port) {
 			return false;
 		}
 	}
+#else
+	if (inet_pton(AF_INET6, ip_str, (sockaddr*)&addr6)) {
+		// Copy address from temporary object
+		_family = AF_INET6;
+		_port = port;
+		memcpy(_ip.v6, &addr6.sin6_addr, sizeof(_ip.v6));
+		return true;
+	} else {
+		// Try to convert from IPv4 address if that failed
+		sockaddr_in addr4;
+
+		if (inet_pton(AF_INET, ip_str, (sockaddr*)&addr4)) {
+			// Copy address from temporary object
+			_family = AF_INET;
+			_port = port;
+			_ip.v4 = addr4.sin_addr.s_addr;
+			return true;
+		} else {
+			// Otherwise mark address as invalid and return false
+			_valid = 0;
+			return false;
+		}
+	}
+#endif
 }
 
 bool UNetAddr::SetFromRawIP(const u8 *ip_binary, int bytes) {
@@ -570,6 +603,7 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 		addr6.sin6_family = _family;
 		memcpy(&addr6.sin6_addr, _ip.v6, sizeof(_ip.v6));
 
+#if defined(CAT_OS_WINDOWS)
 		// Allocate space for address string
 		DWORD str_len6 = bytes;
 
@@ -578,6 +612,12 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 												0, buffer, &str_len6)) {
 			return Sockets::GetLastErrorString();
 		}
+#else
+		if (buffer != inet_ntop(AF_INET6, &addr6, buffer, bytes)) {
+			return Sockets::GetLastErrorString();
+		}
+#endif
+		buffer[bytes - 1] = '\0';
 
 		return buffer;
 	} else if (_family == AF_INET) {
@@ -585,8 +625,9 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 		sockaddr_in addr4;
 		CAT_OBJCLR(addr4);
 		addr4.sin_family = _family;
-		addr4.sin_addr.S_un.S_addr = _ip.v4;
+		addr4.sin_addr.s_addr = _ip.v4;
 
+#if defined(CAT_OS_WINDOWS)
 		// Allocate space for address string
 		DWORD str_len4 = bytes;
 
@@ -595,6 +636,12 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 												0, buffer, &str_len4)) {
 			return Sockets::GetLastErrorString();
 		}
+#else
+		if (buffer != inet_ntop(AF_INET, &addr4, buffer, bytes)) {
+			return Sockets::GetLastErrorString();
+		}
+#endif
+		buffer[bytes - 1] = '\0';
 
 		return buffer;
 	} else {
@@ -633,7 +680,7 @@ bool UNetAddr::Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6) const {
 
 			addr4->sin_family = AF_INET;
 			addr4->sin_port = htons(_port);
-			addr4->sin_addr.S_un.S_addr = _ip.v4;
+			addr4->sin_addr.s_addr = _ip.v4;
 			CAT_OBJCLR(addr4->sin_zero);
 
 			addr_len = sizeof(sockaddr_in);
