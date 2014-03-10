@@ -532,7 +532,7 @@ bool UNetAddr::SetFromString(const char *ip_str, Port port) {
 		}
 	}
 #else
-	if (inet_pton(AF_INET6, ip_str, (sockaddr*)&addr6)) {
+	if (inet_pton(AF_INET6, ip_str, &addr6.sin6_addr)) {
 		// Copy address from temporary object
 		_family = AF_INET6;
 		_port = port;
@@ -542,7 +542,7 @@ bool UNetAddr::SetFromString(const char *ip_str, Port port) {
 		// Try to convert from IPv4 address if that failed
 		sockaddr_in addr4;
 
-		if (inet_pton(AF_INET, ip_str, (sockaddr*)&addr4)) {
+		if (inet_pton(AF_INET, ip_str, &addr4.sin_addr)) {
 			// Copy address from temporary object
 			_family = AF_INET;
 			_port = port;
