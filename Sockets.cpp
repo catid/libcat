@@ -613,7 +613,7 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 			return Sockets::GetLastErrorString();
 		}
 #else
-		if (buffer != inet_ntop(AF_INET6, &addr6, buffer, bytes)) {
+		if (buffer != inet_ntop(AF_INET6, &addr6.sin6_addr, buffer, bytes)) {
 			return Sockets::GetLastErrorString();
 		}
 #endif
@@ -637,7 +637,7 @@ const char *UNetAddr::IPToString(char *buffer, int bytes) const {
 			return Sockets::GetLastErrorString();
 		}
 #else
-		if (buffer != inet_ntop(AF_INET, &addr4, buffer, bytes)) {
+		if (buffer != inet_ntop(AF_INET, &addr4.sin_addr, buffer, bytes)) {
 			return Sockets::GetLastErrorString();
 		}
 #endif
