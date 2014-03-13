@@ -81,6 +81,10 @@ public:
 
 	void Initialize(u32 buffer_bytes);
 
+	CAT_INLINE u32 GetBufferBytes() {
+		return _buffer_bytes;
+	}
+
 	CAT_INLINE bool Valid() {
 		// Invalid until Initialize()
 		return _buffer_bytes != 0;
