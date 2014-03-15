@@ -175,9 +175,9 @@ void cat::memxor_set(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, 
 		}
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
 	} else {
-		vec_block * CAT_RESTRICT in_block1 = (vec_block * CAT_RESTRICT)a64;
-		vec_block * CAT_RESTRICT in_block2 = (vec_block * CAT_RESTRICT)b64;
-		vec_block * CAT_RESTRICT out_block = (vec_block * CAT_RESTRICT)output64;
+		vec_block * CAT_RESTRICT in_block1 = (vec_block * CAT_RESTRICT)a_w;
+		vec_block * CAT_RESTRICT in_block2 = (vec_block * CAT_RESTRICT)b_w;
+		vec_block * CAT_RESTRICT out_block = (vec_block * CAT_RESTRICT)output_w;
 
 		while (bytes >= 128)
 		{
@@ -185,9 +185,9 @@ void cat::memxor_set(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, 
 			bytes -= 128;
 		}
 
-		output64 = (u64 * CAT_RESTRICT)out_block;
-		a64 = (u64 * CAT_RESTRICT)in_block1;
-		b64 = (u64 * CAT_RESTRICT)in_block2;
+		output_w = (u64 * CAT_RESTRICT)out_block;
+		a_w = (u64 * CAT_RESTRICT)in_block1;
+		b_w = (u64 * CAT_RESTRICT)in_block2;
 	}
 #endif
 
@@ -272,9 +272,9 @@ void cat::memxor_add(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, 
 		}
 #ifdef CAT_HAS_VECTOR_EXTENSIONS
 	} else {
-		vec_block * CAT_RESTRICT in_block1 = (vec_block * CAT_RESTRICT)a64;
-		vec_block * CAT_RESTRICT in_block2 = (vec_block * CAT_RESTRICT)b64;
-		vec_block * CAT_RESTRICT out_block = (vec_block * CAT_RESTRICT)output64;
+		vec_block * CAT_RESTRICT in_block1 = (vec_block * CAT_RESTRICT)a_w;
+		vec_block * CAT_RESTRICT in_block2 = (vec_block * CAT_RESTRICT)b_w;
+		vec_block * CAT_RESTRICT out_block = (vec_block * CAT_RESTRICT)output_w;
 
 		while (bytes >= 128)
 		{
@@ -282,9 +282,9 @@ void cat::memxor_add(void * CAT_RESTRICT voutput, const void * CAT_RESTRICT va, 
 			bytes -= 128;
 		}
 
-		output64 = (u64 * CAT_RESTRICT)out_block;
-		a64 = (u64 * CAT_RESTRICT)in_block1;
-		b64 = (u64 * CAT_RESTRICT)in_block2;
+		output_w = (u64 * CAT_RESTRICT)out_block;
+		a_w = (u64 * CAT_RESTRICT)in_block1;
+		b_w = (u64 * CAT_RESTRICT)in_block2;
 	}
 #endif
 
