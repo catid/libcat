@@ -29,10 +29,18 @@
 #ifndef CAT_SOCKETS_HPP
 #define CAT_SOCKETS_HPP
 
+#include "Platform.hpp"
+
 #if defined(CAT_OS_WINDOWS)
 # include <WS2tcpip.h>
 #else
 # include <unistd.h>
+# include <sys/types.h>
+# include <netinet/in.h>
+#endif
+
+#ifdef CAT_OS_ANDROID
+#include <sys/socket.h>
 #endif
 
 /*
@@ -66,7 +74,7 @@ typedef u16 Port;
 	typedef int SocketHandle;
 	static const SocketHandle INVALID_SOCKET = -1;
 	static const int SOCKET_ERROR = -1;
-	CAT_INLINE bool CloseSocketHandle(Socket s) {
+	CAT_INLINE bool CloseSocketHandle(SocketHandle s) {
 		return !close(s);
 	}
 #endif
@@ -188,7 +196,7 @@ struct CAT_EXPORT UNetAddr {
 	bool SetFromRawIP(const u8 *ip_binary, int bytes);
 	bool SetFromDotDecimals(int a, int b, int c, int d, Port port = 0);
 
-	bool Unwrap(SockAddr &addr, int &addr_len, bool PromoteToIP6 = false) const;
+	bool Unwrap(SockAddr &addr, socklen_t &addr_len, bool PromoteToIP6 = false) const;
 };
 
 // Wrapper for IPv4 and IPv6 addresses

@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2012 Christopher A. Taylor.  All rights reserved.
+	Copyright (c) 2012-2014 Christopher A. Taylor.  All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
@@ -35,202 +35,127 @@ namespace cat {
 
 
 /*
-	Optimized 128-bit and 64-bit Arithmetic Macro Library
+	128-bit Arithmetic
 
-
-	CAT_ADD128(r_hi, r_lo, x_hi, x_lo)
-
-		Accumulator is 128-bit, input x(hi:lo) is 128-bit.
-
-		r(hi:lo) += x(hi:lo)
-
-	CAT_PADD128(r_hi, r_lo, x)
-
-		Accumulator is 128-bit, input x is 64-bit.
-
-		r(hi:lo) += (u64)x
-
-	CAT_MUL64(r_hi, r_lo, x, y)
-
-		Product is 128-bit, inputs x,y are 64-bit.
-
-		r(hi:lo) = x * y
-
-	CAT_PMUL64(r_hi, r_lo, x, y)
-
-		Product is 128-bit, inputs x,y are 64-bit.
-
-		Pre-condition: MSB(x) = MSB(y) = 0
-
-		r(hi:lo) = x * y
-
-	CAT_MUL32(x, y)
-
-		Implicitly casts arguments to 32-bit numbers.
-
-		Product is 64-bit, inputs x,y are 32-bit.
-
-		This macro exists because some compilers produce
-		better code when an intrinsic is used for this.
-
-
-	NOTES:
-
-		All platforms have a 64-bit integer called cat::u64.
+	This wraps the best ways on each compiler and architecture to emulate 128-bit
+	arithmetic, assuming that a 64-bit type is provided by the compiler.
 */
 
-
-//// Platform-specialized versions ////
-
-#if defined(CAT_WORD_64)
-
-
-#if defined(CAT_ASM_ATT) && defined(CAT_ISA_X86) // X86-64:
-
-# define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)	\
-	CAT_ASM_BEGIN							\
-		"addq %3, %1 \n\t"					\
-		"adcq %2, %0"						\
-		: "+r"(r_hi),"+r"(r_lo)				\
-		: "r"(x_hi),"r"(x_lo) : "cc"		\
-	CAT_ASM_END
-
-# define CAT_MUL64(r_hi, r_lo, x, y)	\
-	CAT_ASM_BEGIN						\
-		"mulq %3"						\
-		: "=a"(r_lo), "=d"(r_hi)		\
-		: "a"(x), "r"(y) : "cc"			\
-	CAT_ASM_END
-
-# define CAT_PMUL64 CAT_MUL64
-
-
-#elif defined(CAT_ASM_ATT) && defined(CAT_ISA_PPC) // PPC-64:
-
-# define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)	\
-	CAT_ASM_BEGIN							\
-		"addc %1, %1, %3 \n\t"				\
-		"adde %0, %0, %2"					\
-		: "+r"(r_hi),"+r"(r_lo)				\
-		: "r"(x_hi),"r"(x_lo) : "cc"		\
-	CAT_ASM_END
-
-# define CAT_MUL64(r_hi, r_lo, x, y)		\
-	{										\
-		u64 __x = x, __y = y;				\
-		r_lo = __x * __y;					\
-		CAT_ASM_BEGIN						\
-			"mulhdu %0, %1, %2"				\
-			: "=r" (r_hi)					\
-			: "r" (__x), "r" (__y) : "cc"	\
-		CAT_ASM_END							\
-	}
-
-# define CAT_PMUL64 CAT_MUL64
-
-
-#elif defined(CAT_HAS_U128) // 128-bit compiler-emulated types:
-
-# define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)															\
-	{																								\
-		u128 __r = ( ((u128)(r_hi) << 64) | (r_lo) ) + ( ((u128)(x_hi) << 64) | (x_lo) );			\
-		r_hi = (u64)(__r >> 64);																	\
-		r_lo = (u64)__r;																			\
-	}
-
-# define CAT_MUL64(r_hi, r_lo, x, y)			\
-	{											\
-		u128 __r = (u128)(x) * (y);				\
-		r_hi = (u64)(__r >> 64);				\
-		r_lo = (u64)__r;						\
-	}
-
-# define CAT_PMUL64 CAT_MUL64
-
-
-#elif defined(CAT_COMPILER_MSVC) // MSVC-64:
-
-# define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)	\
-	{										\
-		u64 __x_lo = x_lo;					\
-		r_lo += __x_lo;						\
-		r_hi += x_hi;						\
-		r_hi += (r_lo) < __x_lo;			\
-	}
-
-# define CAT_MUL64(r_hi, r_lo, x, y)	\
-	r_lo = _umul128(x, y, &(r_hi));
-
-# define CAT_PMUL64 CAT_MUL64
-
-#endif // platforms
-
-
-#else // 32-bit specialized versions:
-
-
-#if defined(CAT_COMPILER_MSVC) // MSVC-32:
-
-# define CAT_MUL32(A, B) __emulu((u32)(A), (u32)(B)) /* slightly faster in ICC */
-
+#ifndef CAT_HAS_U128
+	struct u128 {
+		u64 i[2];
+	};
 #endif
 
+// r = x
+// The high part is set to zero
+CAT_INLINE void u128_set(u128 &r, const u64 x);
 
-#endif // CAT_WORD_64
+// r = high : low
+CAT_INLINE void u128_set(u128 &r, const u64 low, const u64 high);
+
+// x + y
+CAT_INLINE u128 u128_sum(const u64 x, const u64 y);
+CAT_INLINE u128 u128_sum(const u128 x, const u64 y);
+CAT_INLINE u128 u128_sum(const u128 x, const u128 y);
+
+// x - y
+CAT_INLINE u128 u128_diff(const u64 x, const u64 y);
+CAT_INLINE u128 u128_diff(const u128 x, const u64 y);
+CAT_INLINE u128 u128_diff(const u128 x, const u128 y);
+
+// r += x
+CAT_INLINE void u128_add(u128 &r, const u128 x);
+CAT_INLINE void u128_add(u128 &r, const u64 x);
+
+// r = -r
+CAT_INLINE u128 u128_neg(const u128 x);
+
+// r -= x
+CAT_INLINE void u128_sub(u128 &r, const u128 x);
+CAT_INLINE void u128_sub(u128 &r, const u64 x);
+
+// ~x
+CAT_INLINE u128 u128_not(const u128 x);
+
+// r |= x
+CAT_INLINE void u128_or(u128 &r, const u64 x);
+
+// x & y
+CAT_INLINE u128 u128_and(const u128 x, const u128 y);
+
+// Set bit x: 0..127
+CAT_INLINE void u128_set_bit(u128 &r, int x);
+
+// Get 32 bits from offset: 0..127
+CAT_INLINE u32 u128_get_bits(const u128 x, int offset);
+
+// r = u128_high(r) + x
+// Negative r values are not sign-extended
+CAT_INLINE void u128_carry_add(u128 &r, const u64 x);
+
+CAT_INLINE void u128_carry_add(u128 &r, const u64 x, const u64 y)
+{
+	u128_carry_add(r, x);
+	u128_add(r, y);
+}
+
+// r = (r >> 64) + x
+// Note that the difference here is that r is signed,
+// so negative values are sign-extended
+CAT_INLINE void u128_borrow_add(u128 &r, const u64 x);
+
+CAT_INLINE void u128_borrow_add_sub(u128 &r, const u64 x, const u64 y)
+{
+	u128_borrow_add(r, x);
+	u128_sub(r, y);
+}
+
+// r >>= shift
+// Precondition: 0 < shift < 64
+CAT_INLINE void u128_rshift(u128 &r, int shift);
+
+// r <<= shift
+// Precondition: 0 < shift < 64
+CAT_INLINE void u128_lshift(u128 &r, int shift);
+
+// (x << shift) + z
+// Precondition: 0 < shift < 64
+CAT_INLINE u128 u128_lshift_sum(const u64 x, int shift, const u64 z);
+
+// x * y
+CAT_INLINE u128 u128_prod(const u64 x, const u64 y);
+
+// x * y + z
+CAT_INLINE u128 u128_prod_sum(const u64 x, const u64 y, const u64 z);
+
+// x * y assuming MSB(x) = MSB(y) = 0
+CAT_INLINE u128 u128_prod_63(const u64 x, const u64 y);
+
+// get high/low halves
+CAT_INLINE u64 u128_high(const u128 x);
+CAT_INLINE u64 u128_low(const u128 x);
+
+// Clear MSB of parameter
+CAT_INLINE void u128_clear_msb(u128 &r);
 
 
-//// Default versions ////
+/*
+ * There are three main platforms to support:
+ *
+ * + 64-bit GCC/Clang with 128-bit emulated types
+ * + 64-bit ICC/MSVC without 128-bit emulated types
+ * + 32-bit with 64-bit emulated types
+ */
 
-#if !defined(CAT_MUL32)
-# define CAT_MUL32(x, y) ( (u64)( (u32)(x) ) * (u32)(y) )
-#endif
-
-#if !defined(CAT_ADD128)
-# define CAT_ADD128(r_hi, r_lo, x_hi, x_lo)		\
-	{											\
-		u64 __x_lo = x_lo;						\
-		r_lo += __x_lo;							\
-		r_hi += x_hi;							\
-		r_hi += (r_lo) < __x_lo;				\
-	}
-#endif
-
-#if !defined(CAT_PADD128)
-# define CAT_PADD128(r_hi, r_lo, x)	\
-	{								\
-		u64 __x = x;				\
-		r_lo += __x;				\
-		r_hi += (r_lo) < __x;		\
-	}
-#endif
-
-#if !defined(CAT_PMUL64)
-# define CAT_PMUL64(r_hi, r_lo, x, y)												\
-	{																				\
-		u64 __x = x;																\
-		u64 __y = y;																\
-		u64 __m = CAT_MUL32(__x, __y >> 32) + CAT_MUL32(__x >> 32, __y);			\
-		r_hi = CAT_MUL32(__x >> 32, __y >> 32);										\
-		r_lo = CAT_MUL32(__x, __y);													\
-		CAT_ADD128(r_hi, r_lo, __m >> 32, __m << 32);								\
-	}
-#endif
-
-#if !defined(CAT_MUL64)
-# define CAT_MUL64(r_hi, r_lo, x, y)					\
-	{													\
-		u64 __x = x;									\
-		u64 __y = y;									\
-		u64 __m = CAT_MUL32(__x, __y >> 32);			\
-		u64 __n = CAT_MUL32(__x >> 32, __y);			\
-		r_hi = CAT_MUL32(__x >> 32, __y >> 32);			\
-		r_lo = CAT_MUL32(__x, __y);						\
-		CAT_ADD128(r_hi, r_lo, __m >> 32, __m << 32);	\
-		CAT_ADD128(r_hi, r_lo, __n >> 32, __n << 32);	\
-	}
+#if defined(CAT_HAS_U128)
+# include "BigMath128.inh"
+#else
+# include "BigMath64.inh"
 #endif
 
 
 } // namespace cat
 
 #endif // CAT_BIG_MATH_HPP
+

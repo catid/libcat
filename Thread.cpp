@@ -214,6 +214,10 @@ void Thread::AbortThread()
 		_thread = 0;
 	}
 
+#elif defined(CAT_OS_ANDROID)
+
+	pthread_kill(_thread, SIGUSR1);
+
 #else
 
 	pthread_cancel(_thread);
