@@ -46,7 +46,7 @@ using namespace cat;
 u64 cat::siphash24(const char key[16], const void *msg, const u64 msg_len,
 			  	   const u64 nonce, const void *ad, const u64 ad_len)
 {
-	// Convert key into two 64-bit integers, and mix in AD1/2
+	// Convert key into two 64-bit integers
 	u64 k0 = getLE(*(const u64 *)key);
 	u64 k1 = getLE(*(const u64 *)(key + 8));
 
