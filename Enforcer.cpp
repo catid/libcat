@@ -31,6 +31,7 @@ using namespace cat;
 
 #if defined(CAT_OS_WINDOWS)
 # include <process.h>
+# include <windows.h>
 #endif
 
 #if defined(CAT_ISA_X86)
