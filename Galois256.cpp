@@ -135,7 +135,7 @@ void cat::GF256Init() {
 	// For each other y value,
 	for (int y = 1; y < 256; ++y) {
 		// Calculate log(y) for mult and 255 - log(y) for div
-		const u8 log_y = GF256_LOG_TABLE[y];
+		const u8 log_y = (u8)GF256_LOG_TABLE[y];
 		const u8 log_yn = 255 - log_y;
 
 		// Next subtable
