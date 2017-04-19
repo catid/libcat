@@ -31,38 +31,54 @@ using namespace cat;
 
 void cat::memswap(void * CAT_RESTRICT vx, void * CAT_RESTRICT vy, int bytes)
 {
-	// Primary engine
-	u64 * CAT_RESTRICT x64 = reinterpret_cast<u64 *>( vx );
-	u64 * CAT_RESTRICT y64 = reinterpret_cast<u64 *>( vy );
+#ifdef CAT_ISA_ARM
+    // Primary engine
+    u8 * CAT_RESTRICT x8 = reinterpret_cast<u8 *>( vx );
+    u8 * CAT_RESTRICT y8 = reinterpret_cast<u8 *>( vy );
 
-	// Handle remaining multiples of 8 bytes
-	while (bytes >= 8) {
-		u64 temp = x64[0];
-		x64[0] = y64[0];
-		y64[0] = temp;
-		bytes -= 8;
-		++x64;
-		++y64;
-	}
+    // Handle remaining multiples of 8 bytes
+    while (bytes > 0) {
+        u8 temp = x8[0];
+        x8[0] = y8[0];
+        y8[0] = temp;
+        bytes--;
+        ++x8;
+        ++y8;
+    }
+#else
+        // Primary engine
+        u64 * CAT_RESTRICT x64 = reinterpret_cast<u64 *>( vx );
+        u64 * CAT_RESTRICT y64 = reinterpret_cast<u64 *>( vy );
 
-	// Handle final <8 bytes
-	u8 * CAT_RESTRICT x = reinterpret_cast<u8 *>( x64 );
-	u8 * CAT_RESTRICT y = reinterpret_cast<u8 *>( y64 );
-	u8 t;
-	u32 t32;
+        // Handle remaining multiples of 8 bytes
+        while (bytes >= 8) {
+                u64 temp = x64[0];
+                x64[0] = y64[0];
+                y64[0] = temp;
+                bytes -= 8;
+                ++x64;
+                ++y64;
+        }
 
-	switch (bytes) {
-	case 7: t = x[6]; x[6] = y[6]; y[6] = t;
-	case 6:	t = x[5]; x[5] = y[5]; y[5] = t;
-	case 5:	t = x[4]; x[4] = y[4]; y[4] = t;
-	case 4:	t32 = *(u32*)x; *(u32*)x = *(u32*)y; *(u32*)y = t32;
-		break;
-	case 3:	t = x[2]; x[2] = y[2]; y[2] = t;
-	case 2:	t = x[1]; x[1] = y[1]; y[1] = t;
-	case 1:	t = x[0]; x[0] = y[0]; y[0] = t;
-	case 0:
-	default:
-		break;
-	}
+        // Handle final <8 bytes
+        u8 * CAT_RESTRICT x = reinterpret_cast<u8 *>( x64 );
+        u8 * CAT_RESTRICT y = reinterpret_cast<u8 *>( y64 );
+        u8 t;
+        u32 t32;
+
+        switch (bytes) {
+        case 7: t = x[6]; x[6] = y[6]; y[6] = t;
+        case 6:	t = x[5]; x[5] = y[5]; y[5] = t;
+        case 5:	t = x[4]; x[4] = y[4]; y[4] = t;
+        case 4:	t32 = *(u32*)x; *(u32*)x = *(u32*)y; *(u32*)y = t32;
+                break;
+        case 3:	t = x[2]; x[2] = y[2]; y[2] = t;
+        case 2:	t = x[1]; x[1] = y[1]; y[1] = t;
+        case 1:	t = x[0]; x[0] = y[0]; y[0] = t;
+        case 0:
+        default:
+                break;
+        }
+#endif
 }
 
