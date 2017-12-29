@@ -316,7 +316,7 @@ u32 Atomic::Add(volatile u32 *x, s32 y)
 
 #if defined(CAT_COMPILER_MSVC) && defined(CAT_WORD_64)
 
-    u32 result = _InterlockedAdd((volatile LONG*)x, y) - y;
+    u32 result = InterlockedAdd((volatile LONG*)x, y) - y;
 
 	CAT_FENCE_COMPILER
 	return result;
